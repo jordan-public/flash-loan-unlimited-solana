@@ -6,24 +6,24 @@ See video [here](./demo/README.md) and on [YouTube here]().
 
 ## Abstract
 
-A novel Flash Loan Facility is described and prototyped on Solana. Using an unusual calling pattern, it allows
-for using Flash Loans in multiple protocols that are agnostic to and unaware of Flash Loans. In addition,
+A novel universal Flash Loan Facility is described and prototyped on Solana. With an unusual calling pattern, it allows
+for Flash Loans in multiple protocols that are agnostic to and unaware of Flash Loans. In addition,
 this facility allows for a novel mechanism in which unlimited non-existent funds can be borrowed for the duration
 of a single transaction, to achieve even more powerful results than the typical flash loans.
 
 ## Introduction
 
-Flash loans are a new lending mechanism appearing first time in Decentralized Finance (DeFi). Protocols are able to
+Flash loans are a new lending mechanism typical to Decentralized Finance (DeFi). Protocols are able to
 borrow funds for the duration of a single atomic transaction. The transaction can succeed only if the flash loan is
-repaid within the same transaction along with the associated fees. 
+repaid within the same transaction along with the associated fee. 
 
 Flash loans have allowed arbitrage, timely liquidations and other very useful operations to be performed by parties
-with no sizable funds making DeFi a plain field available to anyone and thus more fair. This availability is making
+with no sizable funds making DeFi a plain field available to anyone and more fair. This availability is making
 the associated DeFi protocols more nimble and thus more stable, more liquid and price-adjusted against other markets.
 
 Flash loans have been a tool for abuse as well, but that has generally occurred with protocols that are poorly written
-and thus subject to manipulation of price oracles. In addition, flash loans have been used to amplify exploits in buggy
-protocols to maximize the attack.
+and as such, subject to manipulation of price oracles. In addition, flash loans have been used to amplify exploits in buggy
+protocols and maximize the attack effects.
 
 One of the first protocols allowing this mechanism was Uniswap, which called it Flash Swaps:
 
@@ -49,8 +49,8 @@ Our calling pattern is different, as it originates at our protocol and ends with
 universality.
 
 In addition, it allows for **borrowing funds that do not exist**. This technique
-has been proven in a classical calling pattern and demonstrated with liquidation of a delinquent leveraged position,
-otherwise not possible with usual flash loan at [CFD DEX and Flash Trillions](https://github.com/jordan-public/cfd-dex)
+has been proven in a typical calling pattern with single protocol and demonstrated in liquidation of a delinquent leveraged position,
+otherwise not possible with usual flash loan, at [CFD DEX and Flash Trillions](https://github.com/jordan-public/cfd-dex)
 presented at 
 [ETHGlobal Scaling Ethereum 2023](https://ethglobal.com/showcase/cfd-dex-and-flash-trillions-ad666). 
 
@@ -72,11 +72,11 @@ In order to allow for universal Flash Loan Facility usable by sequence of protoc
 checks whether the loan is repaid along with the fee and otherwise it reverts
 the entire transaction.
 
-But what dows the "U" stand for in the FLUF Protocol? Read on...
+But what does the "U" stand for in the FLUF Protocol? Read on...
 
 ## Unlimited Flash Loans - Borrowing Non-existent Funds
 
-The FLUF Protocols can offer Flash Loans of **any** requested amount, regardless whether the funds exist or not. How does this work? Here is the explanation:
+**FLUF** stands for **Flash Loan Unlimited Facility**. The FLUF Protocol can offer Flash Loans of **any** requested amount, regardless whether the funds exist or not. How does this work? Here is the explanation:
 
 Protocols are usually agnostic to the assets used and anyone can create new pools. For example, in an AMM (Automated Market Maker) anyone can create a Liquidity Pool for trading any desired pair of tokens A and B. As appropriate
 amounts of A and B are deposited in the Liquidity Pool, then anyone can trade
@@ -97,7 +97,9 @@ amount x of A and return it to the caller.
 
 The FLUF Protocol (Flash Loan **Unlimited** Facility Protocol) operates Pools of capital (tokens) and it is in charge of minting and burning but it enforces the following rules:
 
-1. Any **investor** depositing a token **T** into the FLUF Pool, receives an equivalent value of amount of token **fT**. Note that the amount of fT received is not necessary the same amount of T deposited, as fT is an appreciating asset, as we will see that in the "Economics" section below. 
+1. Any **investor** depositing a token **T** into the FLUF Pool, receives an equivalent value of amount of token **fT**. Note that the amount of fT received is not necessary the same amount of T deposited, as fT is an appreciating asset, as we will see that in the "Economics" section below. In addition, as the fT tokens contain actual collateralized value, they can be
+used in other DeFi protocols, for additional yield, but that's irrelevant
+to our explanation.
 2. The FLUF Protocol operates in two **Modes**: **Direct** and **Wrapped**, and this is **determined at the time of creation** of the appropriate Pool. In Direct Mode, it lends tokens **T**, but in the Wrapped Mode it lends tokens **wT**. Outside of Flash Loans each wT is equivalent to one T (it wraps 1 T). Note that for Unlimited Flash Loans the FLUF Protocol lends in Wrapped Mode.
 3. Outside of Flash Loans, only **T** can be exchanged for **fT** (Pool Deposit) and vice versa (Pool Withdrawal).
 4. Inside Flash Loan (entrypoint ```lendAndCall```), 
@@ -125,6 +127,14 @@ receives $x * f_w / f_d$ where $f_d$ is the Pool's factor $f$ recorded at the ti
 The above calculations stimulate initial investors, but not unfairly. As there
 is more need for wT tokens in circulation, there is more need for minting wT,
 but also more usage of wT for all investors to enjoy.
+
+So far only the yield obtained from the FLUF Protocol is explained. But there is more: As investors deposit tokens T into the FLUF Protocol (regarding whether in Direct of Wrapped Mode Pools), they receive tokens fT, which have
+actual collateralized value. As such they can be used in other DeFi protocols
+for additional yield, for example to borrow other assets against fT, or
+even to borrow more T against fT and re-engage the borrowed T in another round
+of investment into the FLUF Protocol. Moreover, borrowing T against fT should
+not require much overcollateralization, as fT is an appreciating asset relative
+to T and there is no Delta Risk.
 
 Here are some important questions and answers, which clarify the economics
 of the Pool's operation:
