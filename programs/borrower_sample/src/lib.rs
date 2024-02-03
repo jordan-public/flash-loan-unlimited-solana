@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-declare_id!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
+declare_id!("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
 
 #[program]
-pub mod fluf {
+pub mod borrower_sample {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
