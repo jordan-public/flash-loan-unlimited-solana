@@ -1,0 +1,16 @@
+- Create Anchor project
+    - Create FLUF program.
+    - Create Borrower1 program for T1.
+    - Create Borrower2 program for T2.
+- Create tests
+    - Test for calling FLUF.
+    - Create mock tokens T1, T2.
+    - Call FLUF to create Direct Mode Pool: fT1.
+    - Call FLUF to create Wrapped Mode Pool: fT2, wT2.
+    - Call FLUF to call Borrower1.
+    - Call FLUF to call Borrower2.
+- Mint T1, T2.
+- Fund Borrower1 with T1, Borrower2 with wT2.
+- Create command line calling clients for:
+    - Wrapping
+    - Calling
