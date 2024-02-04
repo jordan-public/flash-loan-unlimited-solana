@@ -5,7 +5,6 @@ use solana_program::sysvar::rent::Rent;
 use solana_program::pubkey;
 
 declare_id!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
-const HARDCODED_PUBKEY: Pubkey = pubkey!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
 
 #[program]
 mod fluf {
@@ -162,13 +161,15 @@ pub struct Deposit<'info> {
     #[account(seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool: Account<'info, Pool>,
     pub pool_mint: Account<'info, Mint>,
-    #[account(mut)]
+    #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool_account: Account<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(mut, token::authority = initializer, seeds = [b"user_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump, rent_exempt = enforce)]
     pub user_account: Account<'info, TokenAccount>,
-    #[account(seeds = [b"voucher".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(seeds = [b"voucher_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub voucher_mint: Account<'info, Mint>,
-    #[account(init_if_needed, payer = initializer, token::mint = voucher_mint, token::authority = initializer, seeds = [b"user_voucher".as_ref(), pool_mint.key().as_ref(), initializer.key.as_ref()], bump,)]
+    #[account(mut, token::mint = voucher_mint, token::authority = pool, seeds = [b"pool_voucher_account".as_ref(), pool_mint.key().as_ref()], bump,)]
+    pub pool_voucher_account: Account<'info, TokenAccount>,
+    #[account(init_if_needed, payer = initializer, token::mint = voucher_mint, token::authority = initializer, seeds = [b"user_voucher_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump,)]
     pub user_voucher_account: Account<'info, TokenAccount>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
@@ -183,8 +184,16 @@ pub struct Withdraw<'info> {
     #[account(seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool: Account<'info, Pool>,
     pub pool_mint: Account<'info, Mint>,
-    #[account(seeds = [b"voucher".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool_account: Account<'info, TokenAccount>,
+    #[account(mut, token::authority = initializer, seeds = [b"user_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump, rent_exempt = enforce)]
+    pub user_account: Account<'info, TokenAccount>,
+    #[account(seeds = [b"voucher_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub voucher_mint: Account<'info, Mint>,
+    #[account(mut, token::mint = voucher_mint, token::authority = pool, seeds = [b"pool_voucher_account".as_ref(), pool_mint.key().as_ref()], bump,)]
+    pub pool_voucher_account: Account<'info, TokenAccount>,
+    #[account(mut, token::mint = voucher_mint, token::authority = initializer, seeds = [b"user_voucher_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump,)]
+    pub user_voucher_account: Account<'info, TokenAccount>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -198,8 +207,16 @@ pub struct Wrap<'info> {
     #[account(seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool: Account<'info, Pool>,
     pub pool_mint: Account<'info, Mint>,
-    #[account(seeds = [b"wrapped".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool_account: Account<'info, TokenAccount>,
+    #[account(mut, token::authority = initializer, seeds = [b"user_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump, rent_exempt = enforce)]
+    pub user_account: Account<'info, TokenAccount>,
+    #[account(seeds = [b"wrapped_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub wrapped_mint: Account<'info, Mint>,
+    #[account(mut, token::mint = wrapped_mint, token::authority = pool, seeds = [b"pool_wrapped_account".as_ref(), pool_mint.key().as_ref()], bump,)]
+    pub pool_wrapped_account: Account<'info, TokenAccount>,
+    #[account(init_if_needed, payer = initializer, token::mint = wrapped_mint, token::authority = initializer, seeds = [b"user_wrapped_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump,)]
+    pub user_wrapped_account: Account<'info, TokenAccount>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -213,8 +230,16 @@ pub struct Unwrap<'info> {
     #[account(seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool: Account<'info, Pool>,
     pub pool_mint: Account<'info, Mint>,
-    #[account(seeds = [b"wrapped".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool_account: Account<'info, TokenAccount>,
+    #[account(init_if_needed, payer = initializer, token::mint = pool_mint, token::authority = initializer, seeds = [b"user_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump, rent_exempt = enforce)]
+    pub user_account: Account<'info, TokenAccount>,
+    #[account(seeds = [b"wrapped_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub wrapped_mint: Account<'info, Mint>,
+    #[account(mut, token::mint = wrapped_mint, token::authority = pool, seeds = [b"pool_wrapped_account".as_ref(), pool_mint.key().as_ref()], bump,)]
+    pub pool_wrapped_account: Account<'info, TokenAccount>,
+    #[account(mut, token::mint = wrapped_mint, token::authority = initializer, seeds = [b"user_wrapped_account".as_ref(), pool_mint.key().as_ref(), initializer.key().as_ref()], bump,)]
+    pub user_wrapped_account: Account<'info, TokenAccount>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -228,13 +253,28 @@ pub struct LendAndCall<'info> {
     #[account(seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool: Account<'info, Pool>,
     pub pool_mint: Account<'info, Mint>,
+    #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub borrower_account: Account<'info, TokenAccount>,
+    #[account(init_if_needed, payer = initializer, token::mint = pool_mint, token::authority = pool, seeds = [b"fer_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub fee_account: Account<'info, TokenAccount>,
     #[account(seeds = [b"wrapped".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub wrapped_mint: Account<'info, Mint>,
-    #[account(seeds = [b"voucher".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut)]
+    pub pool_wrapped_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub borrower_wrapped_account: Account<'info, TokenAccount>,
+    #[account(seeds = [b"voucher_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub voucher_mint: Account<'info, Mint>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+    // Borrower program account
+    /// CHECK: This is the borrower program account that will be called - it is safe because at the end we check for the repayment
+    pub borrower_program: AccountInfo<'info>,
+    // Other accounts (used by the borrower program entry point)
+    // &ctx.remaining_accounts does not need declaration - it is automatically included
 }
 
 #[error_code]
