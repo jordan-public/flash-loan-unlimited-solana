@@ -109,7 +109,7 @@ Outside of Flash Loans each fT is collateralized by T.
 the FLUF Protocol **mints** **any** requested amount of fT without collateral (regardless of the amount of T in the pool). However, this amount has to be repaid by the end of the transaction along with the fee, but then the FLUF Protocol **burns** only the amount that was lent. The reason why the FLUF Protocol can mint any amount without limit
 is because it does so without collateral, yet with appropriate repayment accounting. 
 
-![Uncollateralized Minting](./Umcollateralized%20Minting.png)
+![Uncollateralized Minting](./Uncollateralized%20Minting.png)
 
 ### FLUF Protocol Roles
 
