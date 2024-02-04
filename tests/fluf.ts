@@ -63,8 +63,18 @@ describe("fluf", () => {
   const programBorrowerSample = anchor.workspace.Fluf as Program<BorrowerSample>;
 
   it("Is initialized!", async () => {
-    // Add your test here.
-    const tx = await program.methods.initialize().rpc();
+    // Assuming AnchorProvider is set up with a funded wallet
+    const provider = anchor.AnchorProvider.env();
+
+    const state = (await PublicKey.findProgramAddress(
+      [Buffer.from("program_state")], 
+      PROGRAM_ID
+    ))[0];
+    const tx = await program.methods.initialize().accounts({
+      deployer: provider.wallet.publicKey,
+      state: state,
+      systemProgram: SystemProgram.programId,
+    }).rpc();
     console.log("Your transaction signature", tx);
   });
 

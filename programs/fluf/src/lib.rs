@@ -10,7 +10,11 @@ declare_id!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
 mod fluf {
     use super::*;
 
-    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        // Initialize the program state - it can be done only once, since the state account is marked as account(init, ...)
+        let state = &mut ctx.accounts.state;
+        state.deployer = ctx.accounts.deployer.key();
+        
         Ok(())
     }
 
@@ -119,6 +123,20 @@ mod fluf {
         Ok(())
     }
 
+    pub fn withdraw_fees(ctx: Context<WithdrawFees>) -> Result<()> {
+        // Make sure the owner is the caller
+        require!(ctx.accounts.initializer.key() == ctx.accounts.state.deployer, ErrorCode::InvalidAdmin);
+        
+        // Transfer all fees to the collector account
+
+        Ok(())
+    }
+
+}
+
+#[account]
+pub struct ProgramState {
+    deployer: Pubkey,
 }
 
 #[account]
@@ -129,7 +147,14 @@ pub struct Pool {
 }
 
 #[derive(Accounts)]
-pub struct Initialize {}
+pub struct Initialize<'info> {
+    // Record the deployer of the program (for administative purposes)
+    #[account(signer, mut)]
+    pub deployer: Signer<'info>,
+    #[account(init, payer = deployer, space = 8 + size_of::<ProgramState>(), seeds = [b"program_state".as_ref()], bump, rent_exempt = enforce)]
+    pub state: Account<'info, ProgramState>,
+    pub system_program: Program<'info, System>,
+}
 
 #[derive(Accounts)]
 #[instruction(decimals: u8)]
@@ -277,6 +302,25 @@ pub struct LendAndCall<'info> {
     // &ctx.remaining_accounts does not need declaration - it is automatically included
 }
 
+#[derive(Accounts)]
+#[instruction(amount: u64)]
+pub struct WithdrawFees<'info> {
+    #[account(signer, mut)]
+    pub initializer: Signer<'info>,
+    #[account(seeds = [b"program_state".as_ref()], bump, rent_exempt = enforce)]
+    pub state: Account<'info, ProgramState>,
+    #[account(seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool: Account<'info, Pool>,
+    pub pool_mint: Account<'info, Mint>,
+    #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"fee_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub fee_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub collector_account: Account<'info, TokenAccount>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+}
+
 #[error_code]
 pub enum ErrorCode {
     // ... (existing error codes)
@@ -290,4 +334,6 @@ pub enum ErrorCode {
     InvalidPool,
     #[msg("Empty pool")]
     EmptyPool,
+    #[msg("Unauthorized")]
+    InvalidAdmin,
 }
