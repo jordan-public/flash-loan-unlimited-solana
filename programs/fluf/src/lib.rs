@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, InitializeMint, mint_to};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer, InitializeMint, mint_to};
 use std::mem::size_of;
 use solana_program::sysvar::rent::Rent;
 use solana_program::pubkey;
@@ -127,7 +127,26 @@ mod fluf {
         // Make sure the owner is the caller
         require!(ctx.accounts.user.key() == ctx.accounts.state.deployer, ErrorCode::InvalidAdmin);
         
-        // Transfer all fees to the collector account
+        // Make sure the pool PDA matches the provided pool mint
+        let pool = &ctx.accounts.pool;
+        require!(pool.pool_mint == ctx.accounts.pool_mint.key(), ErrorCode::InvalidPool);
+
+        // Obtain the fee_account balance
+        let balance = ctx.accounts.fee_account.amount;
+        
+        // Prepare the transfer instruction
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.fee_account.to_account_info(),
+            to: ctx.accounts.collector_account.to_account_info(),
+            authority: ctx.accounts.pool.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        
+        // Execute the transfer of the entire balance of the fee account for the pool mint
+        token::transfer(cpi_ctx, balance)?;
+
+        msg!("Fees from {} pool withdrawn: {}", ctx.accounts.pool_mint.key(), balance);
 
         Ok(())
     }
