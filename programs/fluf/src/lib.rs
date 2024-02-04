@@ -21,13 +21,7 @@ mod fluf {
         pool.wrapped_mint = ctx.accounts.wrapped_mint.key();
         pool.voucher_mint = ctx.accounts.voucher_mint.key();
         
-        // Set the mint authority to the program's PDA
-        let mint_authority = ctx.program_id.key();
-        require!(mint_authority == HARDCODED_PUBKEY, ErrorCode::InvalidMintAuthority);
-        require!(ctx.accounts.wrapped_mint.mint_authority == solana_program::program_option::COption::Some(mint_authority), ErrorCode::MintAuthorityMismatch);
-        require!(ctx.accounts.voucher_mint.mint_authority == solana_program::program_option::COption::Some(mint_authority), ErrorCode::MintAuthorityMismatch);
-
-        // Discover the decimals and name of the pool token
+        // Make sure the number of decimals matches the pool mint (and thus the wrapped and voucher mints as well)
         let pool_mint_decimals = ctx.accounts.pool_mint.decimals;
         require!(pool_mint_decimals == decimals, ErrorCode::DecimalsMismatch);
 
@@ -145,15 +139,16 @@ pub struct CreatePool<'info> {
     pub initializer: Signer<'info>,
     #[account(init, payer = initializer, space = 8 + size_of::<Pool>(), seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool: Account<'info, Pool>,
-    pub pool_mint: Account<'info, Mint>,
-    // //#[account(init, payer = initializer, token::mint = pool_mint, token::authority = HARDCODED_PUBKEY, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
-    // pub pool_account: Account<'info, TokenAccount>,
-    #[account(init, payer = initializer, mint::authority = HARDCODED_PUBKEY, mint::decimals = decimals, seeds = [b"wrapped".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool_mint: Account<'info, Mint>, // This is the mint of the pool token - it can be any SPL token
+    #[account(init, payer = initializer, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool_account: Account<'info, TokenAccount>,
+    #[account(init, payer = initializer, mint::authority = pool, mint::decimals = decimals, seeds = [b"wrapped_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub wrapped_mint: Account<'info, Mint>,
-    //#[account(init, payer = initializer, token::mint = wrapped_mint, token::authority = HARDCODED_PUBKEY, seeds = [b"wrapped_pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
-    // pub wrapped_pool_account: Account<'info, TokenAccount>,
-    #[account(init, payer = initializer, mint::authority = HARDCODED_PUBKEY, mint::decimals = decimals, seeds = [b"voucher".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(init, payer = initializer, token::mint = wrapped_mint, token::authority = pool, seeds = [b"wrapped_pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub wrapped_pool_account: Account<'info, TokenAccount>,
+    #[account(init, payer = initializer, mint::authority = pool, mint::decimals = decimals, seeds = [b"voucher_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub voucher_mint: Account<'info, Mint>,
+    // There is no need to create a voucher pool account, as it only minted but never held by the pool
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,

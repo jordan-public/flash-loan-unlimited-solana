@@ -164,12 +164,20 @@ describe("fluf", () => {
       PROGRAM_ID
     ))[0];
     const pool_mint = tokenMint;
+    const pool_account =(await PublicKey.findProgramAddress(
+      [Buffer.from("pool_account"), tokenMint.toBuffer()], 
+      PROGRAM_ID
+    ))[0];
     const wrapped_mint = (await PublicKey.findProgramAddress(
-      [Buffer.from("wrapped"), tokenMint.toBuffer()], 
+      [Buffer.from("wrapped_mint"), tokenMint.toBuffer()], 
+      PROGRAM_ID
+    ))[0];
+    const wrapped_pool_account = (await PublicKey.findProgramAddress(
+      [Buffer.from("wrapped_pool_account"), tokenMint.toBuffer()], 
       PROGRAM_ID
     ))[0];
     const voucher_mint = (await PublicKey.findProgramAddress(
-      [Buffer.from("voucher"), tokenMint.toBuffer()], 
+      [Buffer.from("voucher_mint"), tokenMint.toBuffer()], 
       PROGRAM_ID
     ))[0];
     const rent = anchor.web3.SYSVAR_RENT_PUBKEY;
@@ -182,7 +190,9 @@ describe("fluf", () => {
       initializer: initializer,
       pool: pool,
       poolMint: pool_mint,
+      poolAccount: pool_account,
       wrappedMint: wrapped_mint,
+      wrappedPoolAccount: wrapped_pool_account,
       voucherMint: voucher_mint,
       rent: rent,
       systemProgram: system_program,
