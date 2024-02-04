@@ -155,20 +155,7 @@ describe("fluf", () => {
     }
     
     // Prepare the accounts for the create_pool function
-    // #[account(mut)]
-    // pub initializer: Signer<'info>,
-    // #[account(init, payer = initializer, space = 8 + size_of::<Pool>(), seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump)]
-    // pub pool: Account<'info, Pool>,
-    // #[account(mut)]
-    // pub pool_mint: Account<'info, Mint>,
-    // #[account(init, payer = initializer, space = Mint::LEN, seeds = [b"wrapped".as_ref(), pool_mint.key().as_ref()], bump)]
-    // pub wrapped_mint: Account<'info, Mint>,
-    // #[account(init, payer = initializer, space = Mint::LEN, seeds = [b"voucher".as_ref(), pool_mint.key().as_ref()], bump)]
-    // pub voucher_mint: Account<'info, Mint>,
-    // pub rent: Sysvar<'info, Rent>,
-    // pub system_program: Program<'info, System>,
-    // pub token_program: Program<'info, Token>,
-    const initializer = poolInvestor1.publicKey;
+    const user = poolInvestor1.publicKey;
     const pool = (await PublicKey.findProgramAddress(
       [Buffer.from("pool"), tokenMint.toBuffer()], 
       PROGRAM_ID
@@ -197,7 +184,7 @@ describe("fluf", () => {
     // Call the create_pool function of the program
     const createPoolTx = await program.methods.createPool(TOKEN_DECIMALS).accounts({
       // List of accounts:
-      initializer: initializer,
+      user: user,
       pool: pool,
       poolMint: pool_mint,
       poolAccount: pool_account,
