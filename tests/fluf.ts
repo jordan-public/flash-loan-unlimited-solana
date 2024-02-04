@@ -8,6 +8,8 @@ import { BorrowerSample } from "../target/types/borrower_sample";
 
 const PROGRAM_ID = new PublicKey("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
 
+const TOKEN_DECIMALS = 9;
+
 async function createToken(connection: anchor.Provider.Connection, creator: anchor.web3.Keypair, recipient: andchor.web3.Keypair, decimals: number, amount: number) {
   // Create a new mint
   const mint = await createMint(
@@ -100,7 +102,8 @@ describe("fluf", () => {
     console.log("poolInvestor2 balance", await provider.connection.getBalance(poolInvestor2.publicKey));
   
     // Mint 1000 tokens for the pool investors
-    const tokenMint = await createToken(provider.connection, tokenAuthority, tokenAuthority, 9, 1_000_000_000_000); // 1000 tokens
+    const tokenMint = await createToken(provider.connection, tokenAuthority, tokenAuthority, TOKEN_DECIMALS, 1_000_000_000_000); // 1000 tokens
+    console.log("Token mint", tokenMint);
 
     const tokenAuthorityTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, tokenAuthority, tokenMint, tokenAuthority.publicKey)).address;
     const flashLoanInitiatorTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, flashLoanInitiator, tokenMint, flashLoanInitiator.publicKey)).address;
@@ -174,7 +177,7 @@ describe("fluf", () => {
     const token_program = TOKEN_PROGRAM_ID;
   
     // Call the create_pool function of the program
-    const createPoolTx = await program.methods.createPool(true).accounts({
+    const createPoolTx = await program.methods.createPool(TOKEN_DECIMALS).accounts({
       // List of accounts:
       initializer: initializer,
       pool: pool,
@@ -185,7 +188,7 @@ describe("fluf", () => {
       systemProgram: system_program,
       tokenProgram: token_program,
     }).signers([poolInvestor1]).rpc();
-    console.log("Swap offer transaction signature", createPoolTx);
+    console.log("create_pool transaction signature", createPoolTx);
   });
 
 });
