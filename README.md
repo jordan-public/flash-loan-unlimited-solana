@@ -66,7 +66,7 @@ In order to allow for universal Flash Loan Facility usable by sequence of protoc
 ![Flash Loan Facility](./Flash%20Loan%20Facility.png)
 
 1. The Flash Loan Facility borrows funds from its pool (PDA - Solana Program Derived Account) and transfers the borrowed funds to the user's program PDA.
-2. The Flash Loan Facility calls (via CPI - Solana Cross Porgram Invocation) the user-written program intended for execution of the Flash Loan transaction.
+2. The Flash Loan Facility calls (via CPI - Solana Cross Program Invocation) the user-written program intended for execution of the Flash Loan transaction.
 3. Having funds available, the user-written program permissionlessly calls a sequence of protocols it wants to utilize.
 4. Once the call to the user-written program returns, the Flash Loan Facility
 checks whether the loan is repaid along with the fee and otherwise it reverts
@@ -95,27 +95,45 @@ amount x of wA and to return it to the caller.
 -  To **unwrap** amount x of wA means to burn amount x of wA, then to unlock
 amount x of A and return it to the caller.
 
+### FLUF Protcol Rules
+
 The FLUF Protocol (Flash Loan **Unlimited** Facility Protocol) operates Pools of capital (tokens) and it is in charge of minting and burning but it enforces the following rules:
 
 1. Any **investor** depositing a token **T** into the FLUF Pool, receives an equivalent value of amount of token **fT**. Note that the amount of fT received is not necessary the same amount of T deposited, as fT is an appreciating asset, as we will see that in the "Economics" section below. In addition, as the fT tokens contain actual collateralized value, they can be
 used in other DeFi protocols, for additional yield, but that's irrelevant
 to our explanation.
-2. The FLUF Protocol operates the pools in two **Modes**: **Direct** and **Wrapped**, and this is **determined at the time of lending** by the parameter named "wrapped". In Direct Mode, it lends tokens **T**, but in the Wrapped Mode it lends tokens **wT**. Outside of Flash Loans each wT is equivalent to one T (it wraps 1 T). Note that for Unlimited Flash Loans the FLUF Protocol lends in Wrapped Mode.
+2. The FLUF Protocol does not lend the deposited tokens **T**, but instead it lends **ft**.
+Outside of Flash Loans each fT is collateralized by T.
 3. Outside of Flash Loans, only **T** can be exchanged for **fT** (Pool Deposit) and vice versa (Pool Withdrawal).
 4. Inside Flash Loan (entrypoint ```lendAndCall```), 
-    - in Direct Mode, the amount of loan is limited to the amount of tokens T deposited in the pool. 
-    - in Wrapped Mode, the FLUF Protocol **mints** **any** requested amount of wT without collateral (regardless of the amount of T in the pool). However, this amount has to be repaid by the end of the transaction along with the fee, but then the FLUF Protocol **burns** only the amount that was lent (and not the fee). The reason the FLUF Protocol can mint any amount without limit
-    in Wrapped Mode is because it does so without collateral, yet with appropriate repayment accounting. 
+the FLUF Protocol **mints** **any** requested amount of fT without collateral (regardless of the amount of T in the pool). However, this amount has to be repaid by the end of the transaction along with the fee, but then the FLUF Protocol **burns** only the amount that was lent. The reason why the FLUF Protocol can mint any amount without limit
+is because it does so without collateral, yet with appropriate repayment accounting. 
 
 ![Uncollateralized Minting](./Umcollateralized%20Minting.png)
 
+### FLUF Protocol Roles
+
+The participants in the FLUF Protocol are the folloiwng:
+1. **Investor**: deposits tokens T into the appropriate FLUF Protocol Pool. Each token has its own pool, which is created permissionlessly by anyone, upon its first usage. In exchange for the deposited T the investors gets an equivalent counter-value fT tokens (FLUF-T). fT is an appreciating asset against T, so the investor depositing T to get a certain amount of fT, can withdraw the his investment and receive more T than initially
+deposited.
+2. **Protocol**: can use fT as any other token. This could be collateral for CFD or Perp 
+Decentralized Exchanges (DEX), liquidity pools for lending and/or borrowing fT, spot DEXes
+for trading fT etc. This can be done in a permissioned manner by the protocol,
+or permissionlessly by the users of protocols that allow it. All such protocols, even
+previously unaware of flash loans, can utilize fT Flash Lending to stabilize their
+locked capital by price arbitrage, liquidation of delinquent accounts etc.
+3. **Flash Loan User**: can borrow any amount of fT to perform above mentioned arbitrage,
+liquidations etc. If the Flash Loan User needs T instead of fT, even for the duration of
+the Flash Loan (within an atomic transaction), he can convert fT to T up to the existent
+amount of T in the pool, and utilize it in protocols that operate on any token T.
+More importantly, fT can be borrowed in arbitrary amounts, making the liquidity pools,
+lending pools, fT-collateralized protocols, etc. even more stable, by being able to
+perform the desired actions even in liquidity crunches.
+
 ## Economics
 
-The depositors (investors) in FLUF Pools make profit from the Pool's operation as follows:
-- in Direct Mode, each Flash Loan has to be repaid (back to the Pool) in token T along with
-the **fee** of **0.3%** of the original amount borrowed.
-- in Wrapped Mode, each Flash Loan has to be repaid (back to the Pool) in token wT along
-with the **fee** of **0.1%** of the original amount borrowed.
+As each Flash Loan has to be repaid (back to the Pool) in token fT along
+with the **fee** of **0.25%** (1/400) of the original amount borrowed. The depositors (Investors) in FLUF Pools make profit by receiving proportional share of this value, after the FLUF Protocol collects 1/6 of that fee.
 
 With the above we can see that the pool grows in value, which is the reason why 1 fT is not equal to 1 T. Each pool has a factor $f$. Then the following rules are enforced:
 - When an investor deposits into the pool, the factor $f_d = f$ is recorded with the deposit. If there was a previous deposit of $d$ tokens T and depositing new $n$ tokens T, instead of rebasing the total deposit to: $d * f / f_d + n$, the factor $f_d$ is adjusted to achieve equivalence at the same
@@ -125,8 +143,8 @@ amount of deposit $d + n$: $f_d = f_d * (d+n) / (d * f / f_d + n)$.
 receives $x * f_w / f_d$ where $f_d$ is the Pool's factor $f$ recorded at the time with the investor's deposit, and $f_w$ is the curren Pool's factor $f$ (at the time of withdrawal).
 
 The above calculations stimulate initial investors, but not unfairly. As there
-is more need for wT tokens in circulation, there is more need for minting wT,
-but also more usage of wT for all investors to enjoy.
+is more need for fT tokens in circulation, there is more need for minting fT,
+but also more usage of fT for all investors to enjoy.
 
 So far only the yield obtained from the FLUF Protocol is explained. But there is more: As investors deposit tokens T into the FLUF Protocol
 they receive tokens fT, which have
@@ -139,12 +157,12 @@ to T and there is no Delta Risk.
 
 Here are some important questions and answers, which clarify the economics
 of the Pool's operation:
-- Q: Why do we need tokens wT in Wrapped Mode outside of Flash Loans?
+- Q: Why do we need tokens fT outside of Flash Loans?
 - A: Because they have actual collateralized value, for other protocols to
 trade and the FLUF Protocol to receive fees.
 
 --
-- Q: Why can then wT be minted in any amount in Wrapped Mode inside Flash Loans? Isn't that frivolous?
+- Q: Why can then fT be minted in any amount inside Flash Loans? Isn't that frivolous?
 - A: It is not frivolous because whatever is minted has to be burned at the
 end in the same amount. No one profits and no one loses. This can be viewed
 as stimulus in order to perform arbitrage, liquidate delinquent derivative

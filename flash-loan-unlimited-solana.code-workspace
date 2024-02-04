@@ -11,7 +11,11 @@
 			"Keypair",
 			"keypairs",
 			"overcollateralization",
+			"permissioned",
+			"permissionless",
+			"permissionlessly",
 			"PUBKEY",
+			"Solana",
 			"Uncollateralized"
 		]
 	}
