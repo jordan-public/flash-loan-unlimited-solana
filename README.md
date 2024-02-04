@@ -100,7 +100,7 @@ The FLUF Protocol (Flash Loan **Unlimited** Facility Protocol) operates Pools of
 1. Any **investor** depositing a token **T** into the FLUF Pool, receives an equivalent value of amount of token **fT**. Note that the amount of fT received is not necessary the same amount of T deposited, as fT is an appreciating asset, as we will see that in the "Economics" section below. In addition, as the fT tokens contain actual collateralized value, they can be
 used in other DeFi protocols, for additional yield, but that's irrelevant
 to our explanation.
-2. The FLUF Protocol operates in two **Modes**: **Direct** and **Wrapped**, and this is **determined at the time of creation** of the appropriate Pool. In Direct Mode, it lends tokens **T**, but in the Wrapped Mode it lends tokens **wT**. Outside of Flash Loans each wT is equivalent to one T (it wraps 1 T). Note that for Unlimited Flash Loans the FLUF Protocol lends in Wrapped Mode.
+2. The FLUF Protocol operates the pools in two **Modes**: **Direct** and **Wrapped**, and this is **determined at the time of lending** by the parameter named "wrapped". In Direct Mode, it lends tokens **T**, but in the Wrapped Mode it lends tokens **wT**. Outside of Flash Loans each wT is equivalent to one T (it wraps 1 T). Note that for Unlimited Flash Loans the FLUF Protocol lends in Wrapped Mode.
 3. Outside of Flash Loans, only **T** can be exchanged for **fT** (Pool Deposit) and vice versa (Pool Withdrawal).
 4. Inside Flash Loan (entrypoint ```lendAndCall```), 
     - in Direct Mode, the amount of loan is limited to the amount of tokens T deposited in the pool. 
@@ -112,9 +112,9 @@ to our explanation.
 ## Economics
 
 The depositors (investors) in FLUF Pools make profit from the Pool's operation as follows:
-- in Direct Mode Pools, each Flash Loan has to be repaid (back to the Pool) in token T along with
+- in Direct Mode, each Flash Loan has to be repaid (back to the Pool) in token T along with
 the **fee** of **0.3%** of the original amount borrowed.
-- in Wrapped Mode Pools, each Flash Loan has to be repaid (back to the Pool) in token wT along
+- in Wrapped Mode, each Flash Loan has to be repaid (back to the Pool) in token wT along
 with the **fee** of **0.1%** of the original amount borrowed.
 
 With the above we can see that the pool grows in value, which is the reason why 1 fT is not equal to 1 T. Each pool has a factor $f$. Then the following rules are enforced:
@@ -128,7 +128,8 @@ The above calculations stimulate initial investors, but not unfairly. As there
 is more need for wT tokens in circulation, there is more need for minting wT,
 but also more usage of wT for all investors to enjoy.
 
-So far only the yield obtained from the FLUF Protocol is explained. But there is more: As investors deposit tokens T into the FLUF Protocol (regarding whether in Direct of Wrapped Mode Pools), they receive tokens fT, which have
+So far only the yield obtained from the FLUF Protocol is explained. But there is more: As investors deposit tokens T into the FLUF Protocol
+they receive tokens fT, which have
 actual collateralized value. As such they can be used in other DeFi protocols
 for additional yield, for example to borrow other assets against fT, or
 even to borrow more T against fT and re-engage the borrowed T in another round
@@ -138,7 +139,7 @@ to T and there is no Delta Risk.
 
 Here are some important questions and answers, which clarify the economics
 of the Pool's operation:
-- Q: Why do we need tokens wT in Wrapped Mode Pools outside of Flash Loans?
+- Q: Why do we need tokens wT in Wrapped Mode outside of Flash Loans?
 - A: Because they have actual collateralized value, for other protocols to
 trade and the FLUF Protocol to receive fees.
 
