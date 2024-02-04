@@ -11,6 +11,7 @@
 			"Keypair",
 			"keypairs",
 			"overcollateralization",
+			"PUBKEY",
 			"Uncollateralized"
 		]
 	}
