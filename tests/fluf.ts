@@ -8,7 +8,7 @@ import { BorrowerSample } from "../target/types/borrower_sample";
 import BN from 'bn.js';
 
 const PROGRAM_ID = new PublicKey("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
-const PROGRAM_BORROWER_SAMPLE_ID = new PublicKey("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
+const PROGRAM_BORROWER_ID = new PublicKey("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
 
 const TOKEN_DECIMALS = 9;
 
@@ -497,11 +497,6 @@ describe("fluf", () => {
     const poolInvestor1FlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor1, fluf_mint, poolInvestor1.publicKey)).address;
     const poolInvestor2FlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor2, fluf_mint, poolInvestor2.publicKey)).address;
 
-    // const user_fluf_account = (await PublicKey.findProgramAddress(
-    //   [Buffer.from("user_fluf_account"), tokenMint.toBuffer(), poolInvestor1.publicKey.toBuffer()], 
-    //   PROGRAM_ID
-    // ))[0];
-
     // Deposit 50 tokens T into the pool to get 50 fT tokens
     const depositTx = await program.methods.deposit(new BN(50_000_000_000)).accounts({
       user: poolInvestor1.publicKey,
@@ -531,21 +526,21 @@ describe("fluf", () => {
     );
     console.log("poolInvestor1FlufTokenAccount token balance", userFlufAccountInfo.amount);
 
-    // Transfer 10 fT tokens to the BorrowerSample program borrower_fluf_account PDA
-    const borrower_fluf_account = (await PublicKey.findProgramAddress(
-      [Buffer.from("borrower_fluf_account"), tokenMint.toBuffer()], 
-      PROGRAM_BORROWER_SAMPLE_ID
-    ))[0];
+    // poolInvestor1 gives 10 fT tokens from his poolInvestor1FlufTokenAccount to the flashLoanInitiatorFlufTokenAccount
     await transfer (
       provider.connection,
       poolInvestor1,
       poolInvestor1FlufTokenAccount,
-      borrower_fluf_account,
+      flashLoanInitiatorFlufTokenAccount,
       poolInvestor1.publicKey,
       10_000_000_000
     );
 
     // Call the lendAndCall function of the program
+    const borrower_fluf_account = (await PublicKey.findProgramAddress(
+      [Buffer.from("borrower_account"), fluf_mint.toBuffer()], 
+      PROGRAM_BORROWER_ID
+    ))[0];
     const fee_account = (await PublicKey.findProgramAddress(
       [Buffer.from("fee_account"), tokenMint.toBuffer()], 
       PROGRAM_ID
@@ -557,11 +552,12 @@ describe("fluf", () => {
       flufMint: fluf_mint,
       poolFlufAccount: pool_fluf_account,
       borrowerFlufAccount: borrower_fluf_account,
+      userFlufAccount: flashLoanInitiatorFlufTokenAccount,
       feeAccount: fee_account,
       rent: rent,
       systemProgram: system_program,
       tokenProgram: token_program,
-      borrowerProgram: PROGRAM_BORROWER_SAMPLE_ID,
+      borrowerProgram: PROGRAM_BORROWER_ID,
     }).signers([flashLoanInitiator]).rpc();
     console.log("lendAndCall transaction signature", lendAndCallTx);
   });

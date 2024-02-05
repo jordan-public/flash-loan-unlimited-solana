@@ -9,7 +9,7 @@ pub mod borrower_sample {
 
     pub fn handle_borrow(ctx: Context<HandleBorrow>) -> Result<()> {
         // Assume the borrowed amount is available in the borrower's PDA account
-        let borrowed_amount = ctx.accounts.borrower_pda_account.amount;
+        let borrowed_amount = ctx.accounts.borrower_account.amount;
         msg!("Borrowed amount: {}", borrowed_amount);
 
         // Put your business logic here
@@ -20,9 +20,9 @@ pub mod borrower_sample {
 
         // Perform the transfer (CPI call) directly in this function
         let cpi_accounts = Transfer {
-            from: ctx.accounts.borrower_pda_account.to_account_info(),
-            to: ctx.accounts.lender_pda_account.to_account_info(),
-            authority: ctx.accounts.borrower_pda_account.to_account_info(),
+            from: ctx.accounts.borrower_account.to_account_info(),
+            to: ctx.accounts.lender_account.to_account_info(),
+            authority: ctx.accounts.borrower_account.to_account_info(),
 
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
@@ -38,11 +38,16 @@ pub struct Initialize {}
 
 #[derive(Accounts)]
 pub struct HandleBorrow<'info> {
+    #[account(signer, mut)]
+    pub user: Signer<'info>,
+    #[account(mut, token::mint = mint, token::authority = borrower_account, seeds = [b"borrower_account".as_ref(), mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub borrower_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub borrower_pda_account: Account<'info, TokenAccount>,
+    pub lender_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub lender_pda_account: Account<'info, TokenAccount>,
+    pub user_account: Account<'info, TokenAccount>,
     /// CHECK: This is only used to validate the token mint, not for storage
-    pub mint_address: Account<'info, Mint>,
+    pub mint: Account<'info, Mint>,
+    pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
 }
