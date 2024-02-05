@@ -133,7 +133,10 @@ perform the desired actions even in liquidity crunches.
 ## Economics
 
 As each Flash Loan has to be repaid (back to the Pool) in token fT along
-with the **fee** of **0.25%** (1/400) of the original amount borrowed. The depositors (Investors) in FLUF Pools make profit by receiving proportional share of this value, after the FLUF Protocol collects 1/6 of that fee.
+with the **fee** of **0.25%** (1/400) of the original amount borrowed. 1/6 of that fee goes to the FLUF Protocol and the remaining 5/6 is burned, 
+thus distributing the fees to the depositors (Investors) via deflation,
+as their unchanged deposit in fT results in more T. To be able to pay the fee in fT, the Flash Loan Borrowers have to deposit more T to receive the needed
+fT.
 
 With the above we can see that the pool grows in value, which is the reason why 1 fT is not equal to 1 T. Each pool has a factor $f$. Then the following rules are enforced:
 - When an investor deposits into the pool, the factor $f_d = f$ is recorded with the deposit. If there was a previous deposit of $d$ tokens T and depositing new $n$ tokens T, instead of rebasing the total deposit to: $d * f / f_d + n$, the factor $f_d$ is adjusted to achieve equivalence at the same
@@ -145,6 +148,17 @@ receives $x * f_w / f_d$ where $f_d$ is the Pool's factor $f$ recorded at the ti
 The above calculations stimulate initial investors, but not unfairly. As there
 is more need for fT tokens in circulation, there is more need for minting fT,
 but also more usage of fT for all investors to enjoy.
+
+To effectively implement the above calculations, $f$ is the ratio of
+the amount of deposited T and the total fT minted, calculated only
+outside of a flash loan. 
+- The withdrawals are always
+in-full, paying out $f * x$ of T for the surrendered $x$ amount of fT.
+- Upon deposit of $x$ of T, the depositor receives $x/f$ of fT.
+
+Solana's low network fees allow for change of the deposited amount by simply
+withdrawing the entire holdings and then depositing the desired amount. This
+approach allows for cleaner code and less mistakes. In the future this may be optimized.
 
 So far only the yield obtained from the FLUF Protocol is explained. But there is more: As investors deposit tokens T into the FLUF Protocol
 they receive tokens fT, which have
