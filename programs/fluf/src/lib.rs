@@ -44,7 +44,7 @@ mod fluf {
 
         let pool_balance = ctx.accounts.pool_account.amount;
         let fluf_total_supply = ctx.accounts.fluf_mint.supply;
-        let amount_fluf = amount * fluf_total_supply / pool_balance;
+        let amount_fluf = if pool_balance == 0 { amount } else { amount * fluf_total_supply / pool_balance };
 
         // Transfer the pool token to the pool PDA (initialize this PDA if it doesn't exist)
         let cpi_accounts = Transfer {
@@ -57,13 +57,20 @@ mod fluf {
         token::transfer(program_cpi_ctx, amount)?; // Fails if the user doesn't have enough tokens
 
         // Mint fluf tokens to the user
-        let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_accounts = MintTo {
             mint: ctx.accounts.fluf_mint.to_account_info(),
-            to: ctx.accounts.user.to_account_info(),
+            to: ctx.accounts.user_fluf_account.to_account_info(),
             authority: ctx.accounts.pool.to_account_info(),
         };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let pool_mint_key = ctx.accounts.pool_mint.key();
+        let seeds = &[
+            b"pool",
+            pool_mint_key.as_ref(),
+            &[ctx.bumps.pool],
+        ];
+        let signer = &[&seeds[..]];
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::mint_to(cpi_ctx, amount_fluf)?;
 
         Ok(())
@@ -78,7 +85,7 @@ mod fluf {
         let pool_balance = ctx.accounts.pool_account.amount;
         let fluf_total_supply = ctx.accounts.fluf_mint.supply;
         let amount_fluf = ctx.accounts.user_fluf_account.amount;
-        let amount = amount_fluf * pool_balance / fluf_total_supply;
+        let amount = if fluf_total_supply == 0 { 0 } else { amount_fluf * pool_balance / fluf_total_supply };
 
         // Burn the fluf tokens
         {
@@ -256,13 +263,13 @@ pub struct Deposit<'info> {
     pub pool_mint: Account<'info, Mint>,
     #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool_account: Account<'info, TokenAccount>,
-    #[account(mut, token::authority = user, seeds = [b"user_account".as_ref(), pool_mint.key().as_ref(), user.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, token::mint = pool_mint, token::authority = user)]
     pub user_account: Account<'info, TokenAccount>,
-    #[account(seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub fluf_mint: Account<'info, Mint>,
     #[account(mut, token::mint = fluf_mint, token::authority = pool, seeds = [b"pool_fluf_account".as_ref(), pool_mint.key().as_ref()], bump,)]
     pub pool_fluf_account: Account<'info, TokenAccount>,
-    #[account(init_if_needed, payer = user, token::mint = fluf_mint, token::authority = user, seeds = [b"user_fluf_account".as_ref(), pool_mint.key().as_ref(), user.key().as_ref()], bump,)]
+    #[account(mut, token::mint = fluf_mint, token::authority = user)]
     pub user_fluf_account: Account<'info, TokenAccount>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
