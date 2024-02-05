@@ -8,6 +8,8 @@ declare_id!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
 
 #[program]
 mod fluf {
+    use solana_program::stake::state::NEW_WARMUP_COOLDOWN_RATE;
+
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -81,7 +83,7 @@ mod fluf {
         // Burn the fluf tokens
         {
         let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_accounts = token::Burn {
+        let cpi_accounts = Burn {
             mint: ctx.accounts.fluf_mint.to_account_info(),
             from: ctx.accounts.user_fluf_account.to_account_info(),
             authority: ctx.accounts.user.to_account_info(),
@@ -111,18 +113,63 @@ mod fluf {
         require!(pool.fluf_mint == ctx.accounts.fluf_mint.key(), ErrorCode::InvalidPool);
 
         // Make sure the pool is not empty - otherwise fees cannot be paid
-        // Determine the total mint of fluf tokens
-        let total_fluf_mint = 0; // TODO:
-        // Check for empty pool
-        require!(total_fluf_mint > 0, ErrorCode::EmptyPool);
+        require!(ctx.accounts.pool_fluf_account.amount > 0, ErrorCode::EmptyPool);
 
-        // Transfer pool_mint or fluf tokens to the borrower PDA
+        // Mint fluf tokens to the borrower PDA
+        // Mint fluf tokens to the user
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = MintTo {
+            mint: ctx.accounts.fluf_mint.to_account_info(),
+            to: ctx.accounts.borrower_fluf_account.to_account_info(),
+            authority: ctx.accounts.pool.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::mint_to(cpi_ctx, amount)?;
 
-        // Call Borrower borrow() entry point
+        // Call Borrower handle_borrow entry point here
+        let cpi_accounts = BorrowerCpiAccounts {
+            borrower_pda_account: ctx.accounts.borrower_fluf_account.to_account_info(),
+            lender_pda_account: ctx.accounts.pool_fluf_account.to_account_info(),
+            mint_address: ctx.accounts.fluf_mint.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.borrower_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts).with_remaining_accounts(ctx.remaining_accounts.to_vec());
+        borrower_program::handle_borrow(cpi_ctx, amount)?;
 
         // Check if loan and fees are paid back
+        // The previous balance of the pool_fluf_account should be 0
+        // ... if this is not the case, someone must have donated to the pool,
+        // ... and this amount should be distributed to all participants as if it were fees
+        require!(ctx.accounts.pool_fluf_account.amount >= amount * 1025 / 1000, ErrorCode::FeesNotPaidBack);
 
-        // Keep the fluf tokens (re-invested in the pool)
+        // Transfer the proper share to the FLUF Protocol fee account
+        let amount_to_burn = ctx.accounts.pool_fluf_account.amount;
+        {
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.pool_fluf_account.to_account_info(),
+            to: ctx.accounts.fee_account.to_account_info(),
+            authority: ctx.accounts.pool.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        // 1000 * 5 / 25 = 200
+        let fee_amount = (ctx.accounts.pool_fluf_account.amount - amount) / 200;
+        amount_to_burn -= fee_amount;
+        token::transfer(cpi_ctx, fee_amount)?;
+        }
+
+        {
+        // Burn the remaining fluf tokens
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = Burn {
+            mint: ctx.accounts.fluf_mint.to_account_info(),
+            from: ctx.accounts.pool_fluf_account.to_account_info(),
+            authority: ctx.accounts.pool.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::burn(cpi_ctx, amount_to_burn)?;
+        }
 
         Ok(())
     }
@@ -305,4 +352,6 @@ pub enum ErrorCode {
     EmptyPool,
     #[msg("Unauthorized")]
     InvalidAdmin,
+    #[msg("Fees not paid back")]
+    FeesNotPaidBack,
 }

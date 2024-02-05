@@ -133,7 +133,7 @@ perform the desired actions even in liquidity crunches.
 ## Economics
 
 As each Flash Loan has to be repaid (back to the Pool) in token fT along
-with the **fee** of **0.25%** (1/400) of the original amount borrowed. 1/6 of that fee goes to the FLUF Protocol and the remaining 5/6 is burned, 
+with the **fee** of **0.25%** (1/400) of the original amount borrowed. 1/5 of that fee goes to the FLUF Protocol and the remaining 5/6 is burned, 
 thus distributing the fees to the depositors (Investors) via deflation,
 as their unchanged deposit in fT results in more T. To be able to pay the fee in fT, the Flash Loan Borrowers have to deposit more T to receive the needed
 fT.
@@ -196,7 +196,7 @@ steal funds. To remedy this issue, the FLUF Protocol would have to keep track of
 fT without collateral in T, which is an indication that this is happening inside of a
 Flash Loan. In such case, the prior ratio $f$ of T and fT should be recorded, and enforced.
 
-Since Solana only allows for 4 levels of CPI calls, the FLUF Protocol takes two levels out
+Since Solana only allows for 4 levels of CPI calls, the FLUF Protocol takes one level out
 of this capability. To remedy this, the calling sequence at the lowest level should be achieved
 via a sequence of Solana Instructions instead of one instruction that calls the FLUF Protocol
 ```lendAndCall``` entry point. However, the sequence of Instructions should be enforced and

@@ -12,6 +12,8 @@ pub mod borrower_sample {
         let borrowed_amount = ctx.accounts.borrower_pda_account.amount;
         msg!("Borrowed amount: {}", borrowed_amount);
 
+        // Put your business logic here
+
         // Calculate the fee (0.3% of the borrowed amount)
         let fee = (borrowed_amount as u64 * 3) / 1000; // Simplified calculation for 0.3%
         let total_repayment = borrowed_amount + fee;
@@ -21,6 +23,7 @@ pub mod borrower_sample {
             from: ctx.accounts.borrower_pda_account.to_account_info(),
             to: ctx.accounts.lender_pda_account.to_account_info(),
             authority: ctx.accounts.borrower_pda_account.to_account_info(),
+            
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
