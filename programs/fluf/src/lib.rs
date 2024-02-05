@@ -44,7 +44,13 @@ mod fluf {
 
         let pool_balance = ctx.accounts.pool_account.amount;
         let fluf_total_supply = ctx.accounts.fluf_mint.supply;
-        let amount_fluf = if pool_balance == 0 { amount } else { amount * fluf_total_supply / pool_balance };
+        let amount_fluf = if pool_balance == 0 { 
+            amount 
+        } else { 
+            let numerator = (amount as u128) * (fluf_total_supply as u128);
+            let denominator = pool_balance as u128;
+            (numerator / denominator) as u64
+        };
 
         // Transfer the pool token to the pool PDA (initialize this PDA if it doesn't exist)
         let cpi_accounts = Transfer {
@@ -85,10 +91,15 @@ mod fluf {
         let pool_balance = ctx.accounts.pool_account.amount;
         let fluf_total_supply = ctx.accounts.fluf_mint.supply;
         let amount_fluf = ctx.accounts.user_fluf_account.amount;
-        let amount = if fluf_total_supply == 0 { 0 } else { amount_fluf * pool_balance / fluf_total_supply };
+        let amount = if fluf_total_supply == 0 {
+            0
+        } else {
+            let numerator = (amount_fluf as u128) * (pool_balance as u128);
+            let denominator = fluf_total_supply as u128;
+            (numerator / denominator) as u64
+        };
 
         // Burn the fluf tokens
-        {
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_accounts = Burn {
             mint: ctx.accounts.fluf_mint.to_account_info(),
@@ -97,18 +108,23 @@ mod fluf {
         };
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         token::burn(cpi_ctx, amount_fluf)?; // Fails if the user doesn't have enough fluf tokens
-        }   
-        {
+        
         // Transfer the pool token to the user
         let cpi_accounts = Transfer {
             from: ctx.accounts.pool_account.to_account_info(),
             to: ctx.accounts.user_account.to_account_info(),
             authority: ctx.accounts.pool.to_account_info(),
         };
+        let pool_mint_key = ctx.accounts.pool_mint.key();
+        let seeds = &[
+            b"pool",
+            pool_mint_key.as_ref(),
+            &[ctx.bumps.pool],
+        ];
+        let signer = &[&seeds[..]];
         let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::transfer(cpi_ctx, amount)?;
-        }
 
         Ok(())
     }
@@ -285,13 +301,13 @@ pub struct Withdraw<'info> {
     pub pool_mint: Account<'info, Mint>,
     #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool_account: Account<'info, TokenAccount>,
-    #[account(mut, token::authority = user, seeds = [b"user_account".as_ref(), pool_mint.key().as_ref(), user.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, token::mint = pool_mint, token::authority = user)]
     pub user_account: Account<'info, TokenAccount>,
-    #[account(seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub fluf_mint: Account<'info, Mint>,
     #[account(mut, token::mint = fluf_mint, token::authority = pool, seeds = [b"pool_fluf_account".as_ref(), pool_mint.key().as_ref()], bump,)]
     pub pool_fluf_account: Account<'info, TokenAccount>,
-    #[account(mut, token::mint = fluf_mint, token::authority = user, seeds = [b"user_fluf_account".as_ref(), pool_mint.key().as_ref(), user.key().as_ref()], bump,)]
+    #[account(mut, token::mint = fluf_mint, token::authority = user)]
     pub user_fluf_account: Account<'info, TokenAccount>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
