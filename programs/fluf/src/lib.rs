@@ -2,6 +2,9 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, MintTo, Burn, Token, TokenAccount, Transfer};
 use std::mem::size_of;
 use solana_program::sysvar::rent::Rent;
+use borrower_sample::cpi::accounts::HandleBorrow;
+use borrower_sample::program::BorrowerSample;
+use borrower_sample::{self};
 
 declare_id!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
 
@@ -124,16 +127,16 @@ mod fluf {
         token::mint_to(cpi_ctx, amount)?;
 
         // Call Borrower handle_borrow entry point here
-        let cpi_accounts = borrower_sample::HandleBorrow {
-            borrower_pda_account: ctx.accounts.borrower_fluf_account,
-            lender_pda_account: ctx.accounts.pool_fluf_account,
-            mint_address: ctx.accounts.fluf_mint,
-            token_program: ctx.accounts.token_program,
+        let cpi_accounts = HandleBorrow {
+            borrower_pda_account: ctx.accounts.borrower_fluf_account.to_account_info(),
+            lender_pda_account: ctx.accounts.pool_fluf_account.to_account_info(),
+            mint_address: ctx.accounts.fluf_mint.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
         };
         let cpi_program = ctx.accounts.borrower_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
             //.with_remaining_accounts(ctx.remaining_accounts.to_vec());
-        borrower_sample::borrower_sample::handle_borrow(cpi_ctx)?;
+        borrower_sample::cpi::handle_borrow(cpi_ctx)?;
 
         // Check if loan and fees are paid back
         // The previous balance of the pool_fluf_account should be 0
@@ -142,7 +145,7 @@ mod fluf {
         require!(ctx.accounts.pool_fluf_account.amount >= amount * 1025 / 1000, ErrorCode::FeesNotPaidBack);
 
         // Transfer the proper share to the FLUF Protocol fee account
-        let amount_to_burn = ctx.accounts.pool_fluf_account.amount;
+        let mut amount_to_burn = ctx.accounts.pool_fluf_account.amount;
         {
         let cpi_accounts = Transfer {
             from: ctx.accounts.pool_fluf_account.to_account_info(),
@@ -308,8 +311,7 @@ pub struct LendAndCall<'info> {
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     // Borrower program account
-    /// CHECK: This is the borrower program account that will be called - it is safe because at the end we check for the repayment
-    pub borrower_program: AccountInfo<'info>,
+    pub borrower_program: Program<'info, BorrowerSample>,
     // Other accounts (used by the borrower program entry point)
     // &ctx.remaining_accounts does not need declaration - it is automatically included
 }
