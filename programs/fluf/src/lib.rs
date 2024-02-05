@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer, InitializeMint, mint_to};
+use anchor_spl::token::{self, Mint, MintTo, Burn, Token, TokenAccount, Transfer, InitializeMint, mint_to};
 use std::mem::size_of;
 use solana_program::sysvar::rent::Rent;
 use solana_program::pubkey;
@@ -40,29 +40,66 @@ mod fluf {
         require!(pool.pool_mint == ctx.accounts.pool_mint.key(), ErrorCode::InvalidPool);
         require!(pool.fluf_mint == ctx.accounts.fluf_mint.key(), ErrorCode::InvalidPool);
 
-        // Transfer the pool token to the pool PDA (initialize this PDA if it doesn't exist)
+        let pool_balance = ctx.accounts.pool_account.amount;
+        let fluf_total_supply = ctx.accounts.fluf_mint.supply;
+        let amount_fluf = amount * fluf_total_supply / pool_balance;
 
-        // Record/update user's deposit value factor (pool token amount / fluf token amount)
+        // Transfer the pool token to the pool PDA (initialize this PDA if it doesn't exist)
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.user_account.to_account_info(),
+            to: ctx.accounts.pool_account.to_account_info(),
+            authority: ctx.accounts.user.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let program_cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(program_cpi_ctx, amount)?; // Fails if the user doesn't have enough tokens
 
         // Mint fluf tokens to the user
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = MintTo {
+            mint: ctx.accounts.fluf_mint.to_account_info(),
+            to: ctx.accounts.user.to_account_info(),
+            authority: ctx.accounts.pool.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::mint_to(cpi_ctx, amount_fluf)?;
 
         Ok(())
     }
 
-    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+    pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
         // Make sure the pool PDA exists
         let pool = &ctx.accounts.pool;
         require!(pool.pool_mint == ctx.accounts.pool_mint.key(), ErrorCode::InvalidPool);
         require!(pool.fluf_mint == ctx.accounts.fluf_mint.key(), ErrorCode::InvalidPool);
 
-        // Calculate the user's pool_mint amount based on the fluf token amount and the pool value factor
-        // Pool value factor = pool token amount / fluf token amount
+        let pool_balance = ctx.accounts.pool_account.amount;
+        let fluf_total_supply = ctx.accounts.fluf_mint.supply;
+        let amount_fluf = ctx.accounts.user_fluf_account.amount;
+        let amount = amount_fluf * pool_balance / fluf_total_supply;
 
-        // Burn the user's fluf tokens
-
-        // Transfer pool_mint tokens to the user
-
-        // Update the user's deposit value factor
+        // Burn the fluf tokens
+        {
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = token::Burn {
+            mint: ctx.accounts.fluf_mint.to_account_info(),
+            from: ctx.accounts.user_fluf_account.to_account_info(),
+            authority: ctx.accounts.user.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::burn(cpi_ctx, amount_fluf)?; // Fails if the user doesn't have enough fluf tokens
+        }   
+        {
+        // Transfer the pool token to the user
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.pool_account.to_account_info(),
+            to: ctx.accounts.user_account.to_account_info(),
+            authority: ctx.accounts.pool.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(cpi_ctx, amount)?;
+        }
 
         Ok(())
     }
@@ -185,7 +222,6 @@ pub struct Deposit<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
 pub struct Withdraw<'info> {
     #[account(signer, mut)]
     pub user: Signer<'info>,
