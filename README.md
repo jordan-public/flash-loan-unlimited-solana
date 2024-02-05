@@ -182,9 +182,25 @@ end in the same amount. No one profits and no one loses. This can be viewed
 as stimulus in order to perform arbitrage, liquidate delinquent derivative
 positions, liquidate delinquent loans etc.
 
-## Multi-protocol Use
-
 ## Implementation and Integration Instructions
+
+## Known Issues
+
+If the Flash Loan is needed to borrow T instead of fT, the standard pattern would be to
+borrow fT, convert it to T up to a maximum amount that exists in the pool and then,
+after usage, deposit back the borrowed T in addition to the appropriate amount for fees and
+repay the loan and the fees. However, since an arbitrary amount of fT can be borrowed,
+the caller can convert the entire pool from fT to T. Leaving nothing in it, this loses
+the information about the prior ratio of fT and T. This would allow the borrower to
+steal funds. To remedy this issue, the FLUF Protocol would have to keep track of minting
+fT without collateral in T, which is an indication that this is happening inside of a
+Flash Loan. In such case, the prior ratio $f$ of T and fT should be recorded, and enforced.
+
+Since Solana only allows for 4 levels of CPI calls, the FLUF Protocol takes two levels out
+of this capability. To remedy this, the calling sequence at the lowest level should be achieved
+via a sequence of Solana Instructions instead of one instruction that calls the FLUF Protocol
+```lendAndCall``` entry point. However, the sequence of Instructions should be enforced and
+the repayment balances recorded (in a PDA).
 
 ## Conclusion
 
