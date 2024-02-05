@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 
 declare_id!("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
 
@@ -7,7 +7,7 @@ declare_id!("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
 pub mod borrower_sample {
     use super::*;
 
-    pub fn handle_borrow(ctx: Context<HandleBorrow>, _mint_address: Pubkey) -> Result<()> {
+    pub fn handle_borrow(ctx: Context<HandleBorrow>) -> Result<()> {
         // Assume the borrowed amount is available in the borrower's PDA account
         let borrowed_amount = ctx.accounts.borrower_pda_account.amount;
         msg!("Borrowed amount: {}", borrowed_amount);
@@ -23,7 +23,7 @@ pub mod borrower_sample {
             from: ctx.accounts.borrower_pda_account.to_account_info(),
             to: ctx.accounts.lender_pda_account.to_account_info(),
             authority: ctx.accounts.borrower_pda_account.to_account_info(),
-            
+
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
@@ -43,6 +43,6 @@ pub struct HandleBorrow<'info> {
     #[account(mut)]
     pub lender_pda_account: Account<'info, TokenAccount>,
     /// CHECK: This is only used to validate the token mint, not for storage
-    pub mint_address: AccountInfo<'info>,
+    pub mint_address: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
 }

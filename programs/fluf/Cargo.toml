@@ -19,3 +19,4 @@ default = []
 anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
 anchor-spl = "0.29.0"
 solana-program = "1.18.1"
+borrower_sample = { path = "../borrower_sample" }

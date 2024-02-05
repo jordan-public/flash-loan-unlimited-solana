@@ -1,15 +1,12 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, MintTo, Burn, Token, TokenAccount, Transfer, InitializeMint, mint_to};
+use anchor_spl::token::{self, Mint, MintTo, Burn, Token, TokenAccount, Transfer};
 use std::mem::size_of;
 use solana_program::sysvar::rent::Rent;
-use solana_program::pubkey;
 
 declare_id!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
 
 #[program]
 mod fluf {
-    use solana_program::stake::state::NEW_WARMUP_COOLDOWN_RATE;
-
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -105,7 +102,7 @@ mod fluf {
 
         Ok(())
     }
-
+    
     pub fn lend_and_call(ctx: Context<LendAndCall>, amount: u64) -> Result<()> {
         // Make sure the pool PDA exists
         let pool = &ctx.accounts.pool;
@@ -127,15 +124,16 @@ mod fluf {
         token::mint_to(cpi_ctx, amount)?;
 
         // Call Borrower handle_borrow entry point here
-        let cpi_accounts = BorrowerCpiAccounts {
-            borrower_pda_account: ctx.accounts.borrower_fluf_account.to_account_info(),
-            lender_pda_account: ctx.accounts.pool_fluf_account.to_account_info(),
-            mint_address: ctx.accounts.fluf_mint.to_account_info(),
-            token_program: ctx.accounts.token_program.to_account_info(),
+        let cpi_accounts = borrower_sample::HandleBorrow {
+            borrower_pda_account: ctx.accounts.borrower_fluf_account,
+            lender_pda_account: ctx.accounts.pool_fluf_account,
+            mint_address: ctx.accounts.fluf_mint,
+            token_program: ctx.accounts.token_program,
         };
         let cpi_program = ctx.accounts.borrower_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts).with_remaining_accounts(ctx.remaining_accounts.to_vec());
-        borrower_program::handle_borrow(cpi_ctx, amount)?;
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            //.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+        borrower_sample::borrower_sample::handle_borrow(cpi_ctx)?;
 
         // Check if loan and fees are paid back
         // The previous balance of the pool_fluf_account should be 0
