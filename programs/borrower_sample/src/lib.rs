@@ -11,25 +11,24 @@ pub mod borrower_sample {
         Ok(())
     }
 
-    pub fn handle_borrow(ctx: Context<HandleBorrow>) -> Result<()> {
+    pub fn handle_borrow(ctx: Context<HandleBorrow>, amount: u64) -> Result<()> {
         // Assume the borrowed amount is available in the borrower's PDA account
-        let borrowed_amount = ctx.accounts.borrower_account.amount;
-        msg!("Borrowed amount: {}", borrowed_amount);
+        msg!("Borrowed amount: {}", amount);
 
         // Put your business logic here
         // - Use the borrowed amount to perform some business logic
         // - Send the profit to the user_account
 
         // Calculate the fee (0.3% of the borrowed amount)
-        let fee = (borrowed_amount as u64 * 3) / 1000; // Simplified calculation for 0.3%
-        let total_repayment = borrowed_amount + fee;
+        let fee = (amount as u64 * 25) / 1000; // Simplified calculation for 0.25%
+        let total_repayment = amount + fee;
+        require!(total_repayment <= ctx.accounts.borrower_account.amount, ErrorCode::InsufficientFunds);
 
         // Repay the borrowed amount and the fee to the lender
         let cpi_accounts = Transfer {
             from: ctx.accounts.borrower_account.to_account_info(),
             to: ctx.accounts.lender_account.to_account_info(),
             authority: ctx.accounts.borrower_account.to_account_info(),
-
         };
         let mint_key = ctx.accounts.mint.key();
         let seeds = &[
@@ -75,4 +74,12 @@ pub struct HandleBorrow<'info> {
     pub mint: Account<'info, Mint>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+}
+
+
+#[error_code]
+pub enum ErrorCode {
+    // ... (existing error codes)
+    #[msg("Insufficient funds")]
+    InsufficientFunds,
 }

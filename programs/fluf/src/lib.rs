@@ -169,7 +169,7 @@ mod fluf {
         let cpi_program = ctx.accounts.borrower_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
             //.with_remaining_accounts(ctx.remaining_accounts.to_vec());
-        borrower_sample::cpi::handle_borrow(cpi_ctx)?;
+        borrower_sample::cpi::handle_borrow(cpi_ctx, amount)?;
 
         // Check if loan and fees are paid back
         // The previous balance of the pool_fluf_account should be 0
@@ -186,8 +186,15 @@ mod fluf {
             to: ctx.accounts.fee_account.to_account_info(),
             authority: ctx.accounts.pool.to_account_info(),
         };
+        let pool_mint_key = ctx.accounts.pool_mint.key();
+        let seeds = &[
+            b"pool",
+            pool_mint_key.as_ref(),
+            &[ctx.bumps.pool],
+        ];
+        let signer = &[&seeds[..]];
         let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         // 1000 * 5 / 25 = 200
         let fee_amount = (ctx.accounts.pool_fluf_account.amount - amount) / 200;
         amount_to_burn -= fee_amount;
@@ -200,7 +207,14 @@ mod fluf {
             from: ctx.accounts.pool_fluf_account.to_account_info(),
             authority: ctx.accounts.pool.to_account_info(),
         };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let pool_mint_key = ctx.accounts.pool_mint.key();
+        let seeds = &[
+            b"pool",
+            pool_mint_key.as_ref(),
+            &[ctx.bumps.pool],
+        ];
+        let signer = &[&seeds[..]];
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::burn(cpi_ctx, amount_to_burn)?;
 
         Ok(())
