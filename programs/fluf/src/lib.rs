@@ -136,7 +136,7 @@ mod fluf {
         require!(pool.fluf_mint == ctx.accounts.fluf_mint.key(), ErrorCode::InvalidPool);
 
         // Make sure the pool is not empty - otherwise fees cannot be paid
-        require!(ctx.accounts.pool_fluf_account.amount > 0, ErrorCode::EmptyPool);
+        require!(ctx.accounts.pool_account.amount > 0, ErrorCode::EmptyPool);
 
         // Mint fluf tokens to the borrower PDA
         // Mint fluf tokens to the user
@@ -146,57 +146,64 @@ mod fluf {
             to: ctx.accounts.borrower_fluf_account.to_account_info(),
             authority: ctx.accounts.pool.to_account_info(),
         };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let pool_mint_key = ctx.accounts.pool_mint.key();
+        let seeds = &[
+            b"pool",
+            pool_mint_key.as_ref(),
+            &[ctx.bumps.pool],
+        ];
+        let signer = &[&seeds[..]];
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::mint_to(cpi_ctx, amount)?;
 
-        // Call Borrower handle_borrow entry point here
-        let cpi_accounts = HandleBorrow {
-            user: ctx.accounts.user.to_account_info(),
-            borrower_account: ctx.accounts.borrower_fluf_account.to_account_info(),
-            lender_account: ctx.accounts.pool_fluf_account.to_account_info(),
-            user_account: ctx.accounts.user_fluf_account.to_account_info(),
-            mint: ctx.accounts.fluf_mint.to_account_info(),
-            system_program: ctx.accounts.system_program.to_account_info(),
-            token_program: ctx.accounts.token_program.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.borrower_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-            //.with_remaining_accounts(ctx.remaining_accounts.to_vec());
-        borrower_sample::cpi::handle_borrow(cpi_ctx)?;
+        // // Call Borrower handle_borrow entry point here
+        // let cpi_accounts = HandleBorrow {
+        //     user: ctx.accounts.user.to_account_info(),
+        //     borrower_account: ctx.accounts.borrower_fluf_account.to_account_info(),
+        //     lender_account: ctx.accounts.pool_fluf_account.to_account_info(),
+        //     user_account: ctx.accounts.user_fluf_account.to_account_info(),
+        //     mint: ctx.accounts.fluf_mint.to_account_info(),
+        //     system_program: ctx.accounts.system_program.to_account_info(),
+        //     token_program: ctx.accounts.token_program.to_account_info(),
+        // };
+        // let cpi_program = ctx.accounts.borrower_program.to_account_info();
+        // let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        //     //.with_remaining_accounts(ctx.remaining_accounts.to_vec());
+        // borrower_sample::cpi::handle_borrow(cpi_ctx)?;
 
-        // Check if loan and fees are paid back
-        // The previous balance of the pool_fluf_account should be 0
-        // ... if this is not the case, someone must have donated to the pool,
-        // ... and this amount should be distributed to all participants as if it were fees
-        require!(ctx.accounts.pool_fluf_account.amount >= amount * 1025 / 1000, ErrorCode::FeesNotPaidBack);
+        // // Check if loan and fees are paid back
+        // // The previous balance of the pool_fluf_account should be 0
+        // // ... if this is not the case, someone must have donated to the pool,
+        // // ... and this amount should be distributed to all participants as if it were fees
+        // require!(ctx.accounts.pool_fluf_account.amount >= amount * 1025 / 1000, ErrorCode::FeesNotPaidBack);
 
-        // Transfer the proper share to the FLUF Protocol fee account
-        let mut amount_to_burn = ctx.accounts.pool_fluf_account.amount;
-        {
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.pool_fluf_account.to_account_info(),
-            to: ctx.accounts.fee_account.to_account_info(),
-            authority: ctx.accounts.pool.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        // 1000 * 5 / 25 = 200
-        let fee_amount = (ctx.accounts.pool_fluf_account.amount - amount) / 200;
-        amount_to_burn -= fee_amount;
-        token::transfer(cpi_ctx, fee_amount)?;
-        }
+        // // Transfer the proper share to the FLUF Protocol fee account
+        // let mut amount_to_burn = ctx.accounts.pool_fluf_account.amount;
+        // {
+        // let cpi_accounts = Transfer {
+        //     from: ctx.accounts.pool_fluf_account.to_account_info(),
+        //     to: ctx.accounts.fee_account.to_account_info(),
+        //     authority: ctx.accounts.pool.to_account_info(),
+        // };
+        // let cpi_program = ctx.accounts.token_program.to_account_info();
+        // let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        // // 1000 * 5 / 25 = 200
+        // let fee_amount = (ctx.accounts.pool_fluf_account.amount - amount) / 200;
+        // amount_to_burn -= fee_amount;
+        // token::transfer(cpi_ctx, fee_amount)?;
+        // }
 
-        {
-        // Burn the remaining fluf tokens
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_accounts = Burn {
-            mint: ctx.accounts.fluf_mint.to_account_info(),
-            from: ctx.accounts.pool_fluf_account.to_account_info(),
-            authority: ctx.accounts.pool.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::burn(cpi_ctx, amount_to_burn)?;
-        }
+        // {
+        // // Burn the remaining fluf tokens
+        // let cpi_program = ctx.accounts.token_program.to_account_info();
+        // let cpi_accounts = Burn {
+        //     mint: ctx.accounts.fluf_mint.to_account_info(),
+        //     from: ctx.accounts.pool_fluf_account.to_account_info(),
+        //     authority: ctx.accounts.pool.to_account_info(),
+        // };
+        // let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        // token::burn(cpi_ctx, amount_to_burn)?;
+        // }
 
         Ok(())
     }
@@ -284,7 +291,7 @@ pub struct Deposit<'info> {
     pub pool_account: Account<'info, TokenAccount>,
     #[account(mut, token::mint = pool_mint, token::authority = user)]
     pub user_account: Account<'info, TokenAccount>,
-    #[account(mut, seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, mint::authority = pool, seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub fluf_mint: Account<'info, Mint>,
     #[account(mut, token::mint = fluf_mint, token::authority = pool, seeds = [b"pool_fluf_account".as_ref(), pool_mint.key().as_ref()], bump,)]
     pub pool_fluf_account: Account<'info, TokenAccount>,
@@ -306,7 +313,7 @@ pub struct Withdraw<'info> {
     pub pool_account: Account<'info, TokenAccount>,
     #[account(mut, token::mint = pool_mint, token::authority = user)]
     pub user_account: Account<'info, TokenAccount>,
-    #[account(mut, seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, mint::authority = pool, seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub fluf_mint: Account<'info, Mint>,
     #[account(mut, token::mint = fluf_mint, token::authority = pool, seeds = [b"pool_fluf_account".as_ref(), pool_mint.key().as_ref()], bump,)]
     pub pool_fluf_account: Account<'info, TokenAccount>,
@@ -325,11 +332,13 @@ pub struct LendAndCall<'info> {
     #[account(seeds = [b"pool".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub pool: Account<'info, Pool>,
     pub pool_mint: Account<'info, Mint>,
-    #[account(seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut, token::mint = pool_mint, token::authority = pool, seeds = [b"pool_account".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub pool_account: Account<'info, TokenAccount>,
+    #[account(mut, mint::authority = pool, seeds = [b"fluf_mint".as_ref(), pool_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub fluf_mint: Account<'info, Mint>,
     #[account(mut)]
     pub pool_fluf_account: Account<'info, TokenAccount>,
-    #[account(init_if_needed, payer = user, token::mint = fluf_mint, token::authority = borrower_fluf_account, seeds = [b"borrower_account".as_ref(), fluf_mint.key().as_ref()], bump, owner = borrower_program.key(), rent_exempt = enforce)]
+    #[account(init_if_needed, payer = user, token::mint = fluf_mint, token::authority = borrower_fluf_account, seeds = [b"borrower_account".as_ref(), fluf_mint.key().as_ref()], bump, rent_exempt = enforce)]
     pub borrower_fluf_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub user_fluf_account: Account<'info, TokenAccount>,
@@ -343,6 +352,11 @@ pub struct LendAndCall<'info> {
     // Other accounts (used by the borrower program entry point)
     // &ctx.remaining_accounts does not need declaration - it is automatically included
 }
+
+// !!! See above: the account should be owned by the borrower_program
+// #[account(init_if_needed, payer = user, token::mint = fluf_mint, token::authority = borrower_fluf_account, seeds = [b"borrower_account".as_ref(), fluf_mint.key().as_ref()], bump, owner = borrower_program.key(), rent_exempt = enforce)]
+// pub borrower_fluf_account: Account<'info, TokenAccount>,
+
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]

@@ -539,8 +539,10 @@ describe("fluf", () => {
     // Call the lendAndCall function of the program
     const borrower_fluf_account = (await PublicKey.findProgramAddress(
       [Buffer.from("borrower_account"), fluf_mint.toBuffer()], 
-      PROGRAM_BORROWER_ID
+      //!!! PROGRAM_BORROWER_ID
+      PROGRAM_ID
     ))[0];
+    console.log("borrower_fluf_account", borrower_fluf_account);
     const fee_account = (await PublicKey.findProgramAddress(
       [Buffer.from("fee_account"), tokenMint.toBuffer()], 
       PROGRAM_ID
@@ -549,6 +551,7 @@ describe("fluf", () => {
       user: flashLoanInitiator.publicKey,
       pool: pool,
       poolMint: pool_mint,
+      poolAccount: pool_account,
       flufMint: fluf_mint,
       poolFlufAccount: pool_fluf_account,
       borrowerFlufAccount: borrower_fluf_account,
