@@ -27,7 +27,7 @@ protocols and maximize the attack effects.
 
 One of the first protocols allowing this mechanism was Uniswap, which called it Flash Swaps:
 
-![Uniswap Flash Swap](./Uniswap%20Flash%20Swap.png)
+![Uniswap Flash Swap](./docs/Uniswap%20Flash%20Swap.png)
 
 The purpose of of the
 Flash Swaps was to perform price arbitrage and equalize the Uniswap price against other on-chain exchanges. To achieve
@@ -63,7 +63,7 @@ Read on...
 
 In order to allow for universal Flash Loan Facility usable by sequence of protocols all unaware of the flash loans, we use a different calling pattern / sequence:
 
-![Flash Loan Facility](./Flash%20Loan%20Facility.png)
+![Flash Loan Facility](./docs/Flash%20Loan%20Facility.png)
 
 1. The Flash Loan Facility borrows funds from its pool (PDA - Solana Program Derived Account) and transfers the borrowed funds to the user's program PDA.
 2. The Flash Loan Facility calls (via CPI - Solana Cross Program Invocation) the user-written program intended for execution of the Flash Loan transaction.
@@ -109,7 +109,7 @@ Outside of Flash Loans each fT is collateralized by T.
 the FLUF Protocol **mints** **any** requested amount of fT without collateral (regardless of the amount of T in the pool). However, this amount has to be repaid by the end of the transaction along with the fee, but then the FLUF Protocol **burns** only the amount that was lent. The reason why the FLUF Protocol can mint any amount without limit
 is because it does so without collateral, yet with appropriate repayment accounting. 
 
-![Uncollateralized Minting](./Uncollateralized%20Minting.png)
+![Uncollateralized Minting](./docs/Uncollateralized%20Minting.png)
 
 ### FLUF Protocol Roles
 
