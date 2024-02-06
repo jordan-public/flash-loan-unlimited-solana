@@ -17,12 +17,14 @@ pub mod borrower_sample {
         msg!("Borrowed amount: {}", borrowed_amount);
 
         // Put your business logic here
+        // - Use the borrowed amount to perform some business logic
+        // - Send the profit to the user_account
 
         // Calculate the fee (0.3% of the borrowed amount)
         let fee = (borrowed_amount as u64 * 3) / 1000; // Simplified calculation for 0.3%
         let total_repayment = borrowed_amount + fee;
 
-        // Perform the transfer (CPI call) directly in this function
+        // Repay the borrowed amount and the fee to the lender
         let cpi_accounts = Transfer {
             from: ctx.accounts.borrower_account.to_account_info(),
             to: ctx.accounts.lender_account.to_account_info(),

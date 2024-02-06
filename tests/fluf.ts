@@ -525,17 +525,7 @@ describe("fluf", () => {
       poolInvestor1FlufTokenAccount
     );
     console.log("poolInvestor1FlufTokenAccount token balance", userFlufAccountInfo.amount);
-
-    // poolInvestor1 gives 10 fT tokens from his poolInvestor1FlufTokenAccount to the flashLoanInitiatorFlufTokenAccount
-    await transfer (
-      provider.connection,
-      poolInvestor1,
-      poolInvestor1FlufTokenAccount,
-      flashLoanInitiatorFlufTokenAccount,
-      poolInvestor1.publicKey,
-      10_000_000_000
-    );
-
+    
     // Call the lendAndCall function of the program
     const borrower_account = (await PublicKey.findProgramAddress(
       [Buffer.from("borrower_account"), fluf_mint.toBuffer()], 
@@ -550,6 +540,18 @@ describe("fluf", () => {
       tokenProgram: token_program,
     }).signers([flashLoanInitiator]).rpc();
     console.log("createAccounts transaction signature", createAccountsTx);
+
+    // poolInvestor1 gives 10 fT tokens from his poolInvestor1FlufTokenAccount to the flashLoanInitiatorFlufTokenAccount
+    // !!! This should be done atomically in a single transaction with the lendAndCall function but in a separate instruction
+    await transfer (
+      provider.connection,
+      poolInvestor1,
+      poolInvestor1FlufTokenAccount,
+      borrower_account,
+      poolInvestor1.publicKey,
+      10_000_000_000
+    );
+
     const fee_account = (await PublicKey.findProgramAddress(
       [Buffer.from("fee_account"), tokenMint.toBuffer()], 
       PROGRAM_ID
