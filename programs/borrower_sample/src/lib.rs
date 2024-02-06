@@ -7,6 +7,10 @@ declare_id!("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
 pub mod borrower_sample {
     use super::*;
 
+    pub fn create_accounts(ctx: Context<CreateAccounts>) -> Result<()> {
+        Ok(())
+    }
+
     pub fn handle_borrow(ctx: Context<HandleBorrow>) -> Result<()> {
         // Assume the borrowed amount is available in the borrower's PDA account
         let borrowed_amount = ctx.accounts.borrower_account.amount;
@@ -35,6 +39,18 @@ pub mod borrower_sample {
 
 #[derive(Accounts)]
 pub struct Initialize {}
+
+#[derive(Accounts)]
+pub struct CreateAccounts<'info> {
+    #[account(signer, mut)]
+    pub user: Signer<'info>,
+    #[account(init_if_needed, payer = user, token::mint = mint, token::authority = borrower_account, seeds = [b"borrower_account".as_ref(), mint.key().as_ref()], bump, rent_exempt = enforce)]
+    pub borrower_account: Account<'info, TokenAccount>,
+    /// CHECK: This is only used to validate the token mint, not for storage
+    pub mint: Account<'info, Mint>,  
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+}
 
 #[derive(Accounts)]
 pub struct HandleBorrow<'info> {

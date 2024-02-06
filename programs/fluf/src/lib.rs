@@ -338,7 +338,7 @@ pub struct LendAndCall<'info> {
     pub fluf_mint: Account<'info, Mint>,
     #[account(mut)]
     pub pool_fluf_account: Account<'info, TokenAccount>,
-    #[account(init_if_needed, payer = user, token::mint = fluf_mint, token::authority = borrower_fluf_account, seeds = [b"borrower_account".as_ref(), fluf_mint.key().as_ref()], bump, rent_exempt = enforce)]
+    #[account(mut)]
     pub borrower_fluf_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub user_fluf_account: Account<'info, TokenAccount>,
@@ -352,11 +352,6 @@ pub struct LendAndCall<'info> {
     // Other accounts (used by the borrower program entry point)
     // &ctx.remaining_accounts does not need declaration - it is automatically included
 }
-
-// !!! See above: the account should be owned by the borrower_program
-// #[account(init_if_needed, payer = user, token::mint = fluf_mint, token::authority = borrower_fluf_account, seeds = [b"borrower_account".as_ref(), fluf_mint.key().as_ref()], bump, owner = borrower_program.key(), rent_exempt = enforce)]
-// pub borrower_fluf_account: Account<'info, TokenAccount>,
-
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
