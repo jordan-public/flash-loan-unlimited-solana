@@ -65,7 +65,7 @@ describe("fluf", () => {
   const program = anchor.workspace.Fluf as Program<Fluf>;
   const programBorrowerSample = anchor.workspace.BorrowerSample as Program<BorrowerSample>;
 
-  it("Is initialized!", async () => {
+  it("Initializes FLUF Protocol", async () => {
     // Assuming AnchorProvider is set up with a funded wallet
     const provider = anchor.AnchorProvider.env();
 
@@ -78,87 +78,22 @@ describe("fluf", () => {
       state: state,
       systemProgram: SystemProgram.programId,
     }).rpc();
-    console.log("Your transaction signature", tx);
+    console.log("Transaction signature", tx);
   });
 
-  it("Initializes pool", async () => {
+  it("Initializes FLUF Pool", async () => {
     // Assuming AnchorProvider is set up with a funded wallet
     const provider = anchor.AnchorProvider.env();
 
-    // Generate keypairs
     const tokenAuthority = anchor.web3.Keypair.generate();
-    const flashLoanInitiator = anchor.web3.Keypair.generate();
-    const poolInvestor1 = anchor.web3.Keypair.generate();
-    const poolInvestor2 = anchor.web3.Keypair.generate();
-    // Airdrop 5 sol into each of the above accounts
     await provider.connection.confirmTransaction(
       await provider.connection.requestAirdrop(tokenAuthority.publicKey, 5e9),
       "confirmed"
     );
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(flashLoanInitiator.publicKey, 5e9),
-      "confirmed"
-    );
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(poolInvestor1.publicKey, 5e9),
-      "confirmed"
-    );
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(poolInvestor2.publicKey, 5e9),
-      "confirmed"
-    );
-    
-    // Check the balances of the accounts
-    console.log("tokenAuthority balance", await provider.connection.getBalance(tokenAuthority.publicKey));
-    console.log("flashLoanInitiator balance", await provider.connection.getBalance(flashLoanInitiator.publicKey));
-    console.log("poolInvestor1 balance", await provider.connection.getBalance(poolInvestor1.publicKey));
-    console.log("poolInvestor2 balance", await provider.connection.getBalance(poolInvestor2.publicKey));
-  
-    // Mint 1000 tokens for the pool investors
     const tokenMint = await createToken(provider.connection, tokenAuthority, tokenAuthority, TOKEN_DECIMALS, 1_000_000_000_000); // 1000 tokens
-    console.log("Token mint", tokenMint);
-
-    const tokenAuthorityTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, tokenAuthority, tokenMint, tokenAuthority.publicKey)).address;
-    const flashLoanInitiatorTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, flashLoanInitiator, tokenMint, flashLoanInitiator.publicKey)).address;
-    const poolInvestor1TokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor1, tokenMint, poolInvestor1.publicKey)).address;
-    const poolInvestor2TokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor2, tokenMint, poolInvestor2.publicKey)).address;
-
-    // Transfer 100 tokens to the pool investor 1
-    await transfer (
-      provider.connection,
-      tokenAuthority,
-      tokenAuthorityTokenAccount,
-      poolInvestor1TokenAccount,
-      tokenAuthority.publicKey,
-      100_000_000_000
-    );
-    {
-      const tokenAccountInfo = await getAccount(
-        provider.connection,
-        poolInvestor1TokenAccount
-      )
-      console.log("poolInvestor1TokenAccount token balance", tokenAccountInfo.amount);
-    }
-
-    // Transfer 200 tokens to the pool investor 2
-    await transfer (
-      provider.connection,
-      tokenAuthority,
-      tokenAuthorityTokenAccount,
-      poolInvestor2TokenAccount,
-      tokenAuthority.publicKey,
-      200_000_000_000
-    );
-    {
-      const tokenAccountInfo = await getAccount(
-        provider.connection,
-        poolInvestor2TokenAccount
-      )
-      console.log("poolInvestor2TokenAccount token balance", tokenAccountInfo.amount);
-    }
     
     // Prepare the accounts for the create_pool function
-    const user = poolInvestor1.publicKey;
+    const user = provider.wallet.publicKey;
     const pool = (await PublicKey.findProgramAddress(
       [Buffer.from("pool"), tokenMint.toBuffer()], 
       PROGRAM_ID
@@ -192,7 +127,7 @@ describe("fluf", () => {
       rent: rent,
       systemProgram: system_program,
       tokenProgram: token_program,
-    }).signers([poolInvestor1]).rpc();
+    }).rpc();
     console.log("create_pool transaction signature", createPoolTx);
   });
 
@@ -200,44 +135,25 @@ describe("fluf", () => {
     // Assuming AnchorProvider is set up with a funded wallet
     const provider = anchor.AnchorProvider.env();
 
-    // Generate keypairs for the NFT holder and the swap offerer
+    // Generate keypairs
     const tokenAuthority = anchor.web3.Keypair.generate();
-    const flashLoanInitiator = anchor.web3.Keypair.generate();
     const poolInvestor1 = anchor.web3.Keypair.generate();
-    const poolInvestor2 = anchor.web3.Keypair.generate();
     // Airdrop 5 sol into each of the above accounts
     await provider.connection.confirmTransaction(
       await provider.connection.requestAirdrop(tokenAuthority.publicKey, 5e9),
       "confirmed"
     );
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(flashLoanInitiator.publicKey, 5e9),
-      "confirmed"
-    );
-    await provider.connection.confirmTransaction(
       await provider.connection.requestAirdrop(poolInvestor1.publicKey, 5e9),
       "confirmed"
     );
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(poolInvestor2.publicKey, 5e9),
-      "confirmed"
-    );
     
-    // Check the balances of the accounts
-    console.log("tokenAuthority balance", await provider.connection.getBalance(tokenAuthority.publicKey));
-    console.log("flashLoanInitiator balance", await provider.connection.getBalance(flashLoanInitiator.publicKey));
-    console.log("poolInvestor1 balance", await provider.connection.getBalance(poolInvestor1.publicKey));
-    console.log("poolInvestor2 balance", await provider.connection.getBalance(poolInvestor2.publicKey));
-  
     // Mint 1000 tokens for the pool investors
     const tokenMint = await createToken(provider.connection, tokenAuthority, tokenAuthority, TOKEN_DECIMALS, 1_000_000_000_000); // 1000 tokens
-    console.log("Token mint", tokenMint);
-
+    
     const tokenAuthorityTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, tokenAuthority, tokenMint, tokenAuthority.publicKey)).address;
-    const flashLoanInitiatorTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, flashLoanInitiator, tokenMint, flashLoanInitiator.publicKey)).address;
     const poolInvestor1TokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor1, tokenMint, poolInvestor1.publicKey)).address;
-    const poolInvestor2TokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor2, tokenMint, poolInvestor2.publicKey)).address;
-
+    
     // Transfer 100 tokens to the pool investor 1
     await transfer (
       provider.connection,
@@ -255,23 +171,6 @@ describe("fluf", () => {
       console.log("poolInvestor1TokenAccount token balance", tokenAccountInfo.amount);
     }
 
-    // Transfer 200 tokens to the pool investor 2
-    await transfer (
-      provider.connection,
-      tokenAuthority,
-      tokenAuthorityTokenAccount,
-      poolInvestor2TokenAccount,
-      tokenAuthority.publicKey,
-      200_000_000_000
-    );
-    {
-      const tokenAccountInfo = await getAccount(
-        provider.connection,
-        poolInvestor2TokenAccount
-      )
-      console.log("poolInvestor2TokenAccount token balance", tokenAccountInfo.amount);
-    }
-    
     // Prepare the accounts for the create_pool function
     const user = poolInvestor1.publicKey;
     const pool = (await PublicKey.findProgramAddress(
@@ -309,16 +208,8 @@ describe("fluf", () => {
     }).signers([poolInvestor1]).rpc();
     console.log("create_pool transaction signature", createPoolTx);
 
-    const tokenAuthorityFlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, tokenAuthority, fluf_mint, tokenAuthority.publicKey)).address;
-    const flashLoanInitiatorFlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, flashLoanInitiator, fluf_mint, flashLoanInitiator.publicKey)).address;
     const poolInvestor1FlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor1, fluf_mint, poolInvestor1.publicKey)).address;
-    const poolInvestor2FlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor2, fluf_mint, poolInvestor2.publicKey)).address;
-
-    // const user_fluf_account = (await PublicKey.findProgramAddress(
-    //   [Buffer.from("user_fluf_account"), tokenMint.toBuffer(), poolInvestor1.publicKey.toBuffer()], 
-    //   PROGRAM_ID
-    // ))[0];
-
+    
     // Deposit 50 tokens T into the pool to get 50 fT tokens
     const depositTx = await program.methods.deposit(new BN(50_000_000_000)).accounts({
       user: poolInvestor1.publicKey,
@@ -384,11 +275,10 @@ describe("fluf", () => {
     // Assuming AnchorProvider is set up with a funded wallet
     const provider = anchor.AnchorProvider.env();
 
-    // Generate keypairs for the NFT holder and the swap offerer
+    // Generate keypairs
     const tokenAuthority = anchor.web3.Keypair.generate();
     const flashLoanInitiator = anchor.web3.Keypair.generate();
     const poolInvestor1 = anchor.web3.Keypair.generate();
-    const poolInvestor2 = anchor.web3.Keypair.generate();
     // Airdrop 5 sol into each of the above accounts
     await provider.connection.confirmTransaction(
       await provider.connection.requestAirdrop(tokenAuthority.publicKey, 5e9),
@@ -402,26 +292,13 @@ describe("fluf", () => {
       await provider.connection.requestAirdrop(poolInvestor1.publicKey, 5e9),
       "confirmed"
     );
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(poolInvestor2.publicKey, 5e9),
-      "confirmed"
-    );
     
-    // Check the balances of the accounts
-    console.log("tokenAuthority balance", await provider.connection.getBalance(tokenAuthority.publicKey));
-    console.log("flashLoanInitiator balance", await provider.connection.getBalance(flashLoanInitiator.publicKey));
-    console.log("poolInvestor1 balance", await provider.connection.getBalance(poolInvestor1.publicKey));
-    console.log("poolInvestor2 balance", await provider.connection.getBalance(poolInvestor2.publicKey));
-  
     // Mint 1000 tokens for the pool investors
     const tokenMint = await createToken(provider.connection, tokenAuthority, tokenAuthority, TOKEN_DECIMALS, 1_000_000_000_000); // 1000 tokens
-    console.log("Token mint", tokenMint);
-
+    
     const tokenAuthorityTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, tokenAuthority, tokenMint, tokenAuthority.publicKey)).address;
-    const flashLoanInitiatorTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, flashLoanInitiator, tokenMint, flashLoanInitiator.publicKey)).address;
     const poolInvestor1TokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor1, tokenMint, poolInvestor1.publicKey)).address;
-    const poolInvestor2TokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor2, tokenMint, poolInvestor2.publicKey)).address;
-
+    
     // Transfer 100 tokens to the pool investor 1
     await transfer (
       provider.connection,
@@ -439,23 +316,6 @@ describe("fluf", () => {
       console.log("poolInvestor1TokenAccount token balance", tokenAccountInfo.amount);
     }
 
-    // Transfer 200 tokens to the pool investor 2
-    await transfer (
-      provider.connection,
-      tokenAuthority,
-      tokenAuthorityTokenAccount,
-      poolInvestor2TokenAccount,
-      tokenAuthority.publicKey,
-      200_000_000_000
-    );
-    {
-      const tokenAccountInfo = await getAccount(
-        provider.connection,
-        poolInvestor2TokenAccount
-      )
-      console.log("poolInvestor2TokenAccount token balance", tokenAccountInfo.amount);
-    }
-    
     // Prepare the accounts for the create_pool function
     const user = poolInvestor1.publicKey;
     const pool = (await PublicKey.findProgramAddress(
@@ -493,11 +353,9 @@ describe("fluf", () => {
     }).signers([poolInvestor1]).rpc();
     console.log("create_pool transaction signature", createPoolTx);
 
-    const tokenAuthorityFlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, tokenAuthority, fluf_mint, tokenAuthority.publicKey)).address;
     const flashLoanInitiatorFlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, flashLoanInitiator, fluf_mint, flashLoanInitiator.publicKey)).address;
     const poolInvestor1FlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor1, fluf_mint, poolInvestor1.publicKey)).address;
-    const poolInvestor2FlufTokenAccount = (await getOrCreateAssociatedTokenAccount(provider.connection, poolInvestor2, fluf_mint, poolInvestor2.publicKey)).address;
-
+    
     // Deposit 50 tokens T into the pool to get 50 fT tokens
     const depositTx = await program.methods.deposit(new BN(50_000_000_000)).accounts({
       user: poolInvestor1.publicKey,
@@ -512,7 +370,7 @@ describe("fluf", () => {
       systemProgram: system_program,
       tokenProgram: token_program,
     }).signers([poolInvestor1]).rpc();  
-    console.log("deposit transaction signature", depositTx);
+    console.log("Deposit  *** 50_000_000_000 *** transaction signature", depositTx);
 
     // Get the pool token balance of the user_fluf_account
     const userAccountInfo = await getAccount(
@@ -532,7 +390,6 @@ describe("fluf", () => {
       [Buffer.from("borrower_account"), fluf_mint.toBuffer()], 
       PROGRAM_BORROWER_ID
     ))[0];
-    console.log("borrower_account", borrower_account);
     const createAccountsTx = await programBorrowerSample.methods.createAccounts().accounts({
       user: flashLoanInitiator.publicKey,
       borrowerAccount: borrower_account,
@@ -572,6 +429,6 @@ describe("fluf", () => {
       tokenProgram: token_program,
       borrowerProgram: PROGRAM_BORROWER_ID,
     }).signers([flashLoanInitiator]).rpc();
-    console.log("lendAndCall transaction signature", lendAndCallTx);
+    console.log("lendAndCall *** 300_000_000_000 *** transaction signature", lendAndCallTx);
   });
 });
