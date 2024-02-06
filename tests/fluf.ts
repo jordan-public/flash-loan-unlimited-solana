@@ -8,8 +8,8 @@ import { Fluf } from "../target/types/fluf";
 import { BorrowerSample } from "../target/types/borrower_sample";
 import BN from 'bn.js';
 
-const PROGRAM_ID = new PublicKey("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
-const PROGRAM_BORROWER_ID = new PublicKey("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
+const PROGRAM_ID = new PublicKey("D9KddH1TpYtNCcZ5igZLrXbreJVHGEmMqfzbkhST9MwS");
+const PROGRAM_BORROWER_ID = new PublicKey("BiBiaMTWecRB3cbz6oMfrKq3F1VKCRLCxKgS3NYLTMCK");
 
 const TOKEN_DECIMALS = 9;
 

@@ -5,8 +5,8 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-fluf = "7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy"
-borrower_sample = "5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y"
+fluf = "D9KddH1TpYtNCcZ5igZLrXbreJVHGEmMqfzbkhST9MwS"
+borrower_sample = "BiBiaMTWecRB3cbz6oMfrKq3F1VKCRLCxKgS3NYLTMCK"
 
 [registry]
 url = "https://api.apr.dev"

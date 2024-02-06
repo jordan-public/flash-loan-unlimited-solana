@@ -7,7 +7,7 @@ use borrower_sample::cpi::accounts::HandleBorrow;
 use borrower_sample::program::BorrowerSample;
 use borrower_sample::{self};
 
-declare_id!("7Crsw9yaDiT5jMZ8yWJgkdVeWpLirh9G5hJZCp9G1Aiy");
+declare_id!("D9KddH1TpYtNCcZ5igZLrXbreJVHGEmMqfzbkhST9MwS");
 
 #[program]
 mod fluf {

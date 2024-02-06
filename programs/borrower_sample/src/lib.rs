@@ -2,7 +2,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{token::{self, Mint, Token, TokenAccount, Transfer}};
 
-declare_id!("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
+declare_id!("BiBiaMTWecRB3cbz6oMfrKq3F1VKCRLCxKgS3NYLTMCK");
 
 #[program]
 pub mod borrower_sample {
