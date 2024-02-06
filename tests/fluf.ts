@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { expect } from 'chai';
@@ -84,7 +85,7 @@ describe("fluf", () => {
     // Assuming AnchorProvider is set up with a funded wallet
     const provider = anchor.AnchorProvider.env();
 
-    // Generate keypairs for the NFT holder and the swap offerer
+    // Generate keypairs
     const tokenAuthority = anchor.web3.Keypair.generate();
     const flashLoanInitiator = anchor.web3.Keypair.generate();
     const poolInvestor1 = anchor.web3.Keypair.generate();

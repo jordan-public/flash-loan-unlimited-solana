@@ -2,7 +2,7 @@
 
 ## Demo
 
-See video [here](./demo/README.md) and on [YouTube here]().
+See demo details anf video [here](./demo/README.md).
 
 ## Abstract
 
@@ -182,7 +182,106 @@ end in the same amount. No one profits and no one loses. This can be viewed
 as stimulus in order to perform arbitrage, liquidate delinquent derivative
 positions, liquidate delinquent loans etc.
 
+## Command Line Interface
+
+The flash loans are not initiated via graphical user interface. Instead, the opportunities
+are sniped in an automated manner to determine when and to execute the flash loan
+and the associated actions. To facilitate this, I have prepared a set of command line
+programs:
+
+The options for all commands are as follows:
+- -u \<url\>: the connection used. It defaults to https://api.devnet.solana.com
+- -p \<file\>: the file where the payer private key is stored. It defaults to the location where Solana stores this in the user's 
+environment.
+---
+Create: creates the pool for a given token mint T. This creates the associated (loosely, wrapped)
+token mint fT (for FLUF-T), which is controlled by the FLUF Protocol (as authority). The FLUF tokens
+cannot be frozen.
+```
+./cli/flufcli.ts create -u <url> -p <file> <token mint>
+```
+It prints out the fT token mint address as it is created.
+The parameters are:
+- \<token mint\>: the base59 address of the token mint that to
+be deposited in the pool.
+
+
+---
+Deposit: deposits the token T and receives an equivalent counter-value of fT.
+```
+./cli/flufcli.ts deposit -u <url> -p <file> <token mint> <amount>
+```
+The parameters are:
+- \<token mint\>: the base59 address of the token mint that to
+be deposited in the pool.
+- \<amount\>: the amount of T to deposit.
+---
+Withdraw: withdraws the entire deposited amount the token T and
+takes the equivalent counter-value of fT.
+```
+./cli/flufcli.ts withdraw -u <url> -p <file> <token mint>
+```
+The parameters are:
+- \<token mint\>: the base59 address of the token mint that to
+be deposited in the pool.
+---
+Balance: displays the balance of T tokens deposited and the equivalent counter-value of fT.
+```
+./cli/flufcli.ts balance -u <url> -p <file> <token mint> <account>
+```
+The parameters are:
+- \<token mint\>: the base59 address of the token mint that to
+be deposited in the pool.
+- \<account\>: the account for which the balance is to be displayed.
+
+The option "-p" is not needed, as this operation is read-only.
+However, if \<account\> is missing, the account associated with
+this file is used.
+---
+Run: this is the command that initiates the flash loan. It issues
+the loan to the borrower program's and calls it's handle_borrow entry point to perform the desired action.
+```
+./cli/flufcli.ts run -u <url> -p <file> <token mint> <borrower_deposit> <amount> <borrower_program_account>
+```
+The parameters are:
+- \<token mint\>: the base59 address of the token mint that to
+be deposited in the pool.
+- \<amount\>: the amount of fT to be lent to the borrower program.
+- \<borrower_deposit>\: the amount of fT that is conveniently deposited from the payer to the borrower program, needed at least
+for paying the fee (unless the action is profitable, as desirable).
+- \<borrower_program_account>: the account of the borrower program
+which ```handle_borrow``` function is called.
+---
+Feesbalance: displays the fees collected for the given pool determined by the token mint deposited.
+```
+./cli/flufcli.ts feesbalance -u <url> <token mint> 
+```
+The parameters are:
+- \<token mint\>: the base59 address of the token mint that determines the pool.
+---
+Feeswithdraw: withdraws the fees collected for the given pool determined by the token mint deposited, into the given token
+account.
+```
+./cli/flufcli.ts feeswithdraw -u <url> <token mint> <account>
+```
+The parameters are:
+- \<token mint\>: the base59 address of the token mint that determines the pool.
+- \<account\>: the token account where the associated fT tokens
+are sent.
+---
+Initialize: called one time upon deployment to set the account
+that can withdraw fees.
+```
+./cli/flufcli.ts initialize -u <url> -p <file>
+```
+The fee collector account can be set only once. It is determined
+by the -p option.
+
+---
+
 ## Implementation and Integration Instructions
+
+TBD
 
 ## Known Issues
 
@@ -202,5 +301,10 @@ via a sequence of Solana Instructions instead of one instruction that calls the 
 ```lendAndCall``` entry point. However, the sequence of Instructions should be enforced and
 the repayment balances recorded (in a PDA).
 
+The program needs a security review. u64 overflows need attention. In places noticed, the 
+calculations are performed in u128 precision and then scaled back to avoid overflows and
+rounding issues. Yet, a complete review and fuzzing is needed.
+
 ## Conclusion
 
+TBD

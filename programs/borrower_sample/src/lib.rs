@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: BUSL-1.1
 use anchor_lang::prelude::*;
-use anchor_spl::{token::{self, Mint, Token, TokenAccount, Transfer}, token_interface::spl_token_2022::state::Multisig};
+use anchor_spl::{token::{self, Mint, Token, TokenAccount, Transfer}};
 
 declare_id!("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
 
@@ -7,7 +8,7 @@ declare_id!("5N7gCufd5hEVkcHVSwtUmAKaHvNNagkq7T4qcUYzJ91y");
 pub mod borrower_sample {
     use super::*;
 
-    pub fn create_accounts(ctx: Context<CreateAccounts>) -> Result<()> {
+    pub fn create_accounts(_ctx: Context<CreateAccounts>) -> Result<()> {
         Ok(())
     }
 
