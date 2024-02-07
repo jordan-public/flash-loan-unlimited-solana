@@ -165,31 +165,6 @@ const run = async() => {
             console.log('Unknown subcommand');
     }
 
-    // Write the arguments to the console
-    // console.log('url:', argv);
-
-    // async function main() {
-    //     const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-    //     const payer = Keypair.generate();
-
-    //     // Sample transaction: create a new account
-    //     const newAccount = Keypair.generate();
-    //     const transaction = new Transaction().add(
-    //         SystemProgram.createAccount({
-    //             fromPubkey: payer.publicKey,
-    //             newAccountPubkey: newAccount.publicKey,
-    //             lamports: await connection.getMinimumBalanceForRentExemption(0),
-    //             space: 0,
-    //             programId: SystemProgram.programId,
-    //         })
-    //     );
-
-    //     await sendAndConfirmTransaction(connection, transaction, [payer, newAccount]);
-    //     console.log(`New account created: ${newAccount.publicKey.toBase58()}`);
-    // }
-
-    // main().catch(err => console.error(err));
-
 };
 
 run();
