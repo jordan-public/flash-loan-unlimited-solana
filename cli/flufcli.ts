@@ -38,7 +38,7 @@ const run = async() => {
         .parseSync(); // Ensure to use parseSync() for correct typing
         //.argv;
 
-    console.log('argv:', argv);
+    // console.log('argv:', argv);
 
     // Convert shorthands for the RPC URL to the full URL
     if (argv.url === 'mainnet-beta' || argv.url === 'm') {
@@ -84,7 +84,7 @@ const run = async() => {
             let tokenMint = new PublicKey("9jEQkoG2vX3ohCr9JzJMuXjydUGxFEjR9phJQsjkHZMP");
             let tokenDecimals = 0;
             try {
-                const tokenMint = new PublicKey(argv._[1]);
+                tokenMint = new PublicKey(argv._[1]);
                 
                 const mintInfo = await getMint(connection, tokenMint);
                 tokenDecimals = mintInfo.decimals;
@@ -166,7 +166,7 @@ const run = async() => {
     }
 
     // Write the arguments to the console
-    console.log('url:', argv);
+    // console.log('url:', argv);
 
     // async function main() {
     //     const connection = new Connection("https://api.devnet.solana.com", "confirmed");

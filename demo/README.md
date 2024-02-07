@@ -25,9 +25,17 @@ Remember the displayed T token mint account.
 
 ---
 
+Create a token account:
+```
+spl-token create-account  --url http://localhost:8899 7mzBeCo5k7FQXZ9T8fbLDB7NjY5Mjrso8mR7myUeVSyw
+
+```
+
+---
+
 Mint some tokens (100)
 ```
-spl-token --url http://localhost:8899 A87Qq3WzVUEqoKrRFobhaPEGnFBgGcwVH8ZCTL5CDqGY 100000000000
+spl-token mint --url http://localhost:8899 7mzBeCo5k7FQXZ9T8fbLDB7NjY5Mjrso8mR7myUeVSyw 100000000000 DuXC5Z8Z8dkqT4ko9pHvNDvk15kmtBQ3EAqm9KULssfi
 ```
 
 ---
@@ -44,7 +52,7 @@ solana program deploy ./target/deploy/borrower_sample.so --url http://localhost:
 
 Create a new fluf pool:
 ```
-./cli/flufcli.ts -u http://localhost:8899 create A87Qq3WzVUEqoKrRFobhaPEGnFBgGcwVH8ZCTL5CDqGY
+./cli/flufcli.ts -u http://localhost:8899 create 7mzBeCo5k7FQXZ9T8fbLDB7NjY5Mjrso8mR7myUeVSyw
 ```
 but replace the T token mint with the one displayed above when created.
 
@@ -52,7 +60,7 @@ but replace the T token mint with the one displayed above when created.
 
 Execute the flash loan and the borrower action:
 ```
-./cli/flufcli.ts -u http://localhost:8899 run A87Qq3WzVUEqoKrRFobhaPEGnFBgGcwVH8ZCTL5CDqGY 300000000000 10000000000 <borrower_program>
+./cli/flufcli.ts -u http://localhost:8899 run 7mzBeCo5k7FQXZ9T8fbLDB7NjY5Mjrso8mR7myUeVSyw 300000000000 10000000000 <borrower_program>
 ```
 Observe the message in the solant-test-validator log that displays the **amount of borrowed fT (300)**,
 which **exceeds the total fT in circulation (100)**.
