@@ -367,7 +367,6 @@ pub struct LendAndCall<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
 pub struct WithdrawFees<'info> {
     #[account(signer, mut)]
     pub user: Signer<'info>,
