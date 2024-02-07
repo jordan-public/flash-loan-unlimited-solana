@@ -2,7 +2,7 @@
 
 ## Video
 
-See demo video [here](./demo/README.md) and on [YouTube here]().
+See demo video [here](./FLUF%20Protocol.mp4) and on [YouTube here](https://youtu.be/J1mcFFjhEA8).
 
 ## Cheat Sheet
 
