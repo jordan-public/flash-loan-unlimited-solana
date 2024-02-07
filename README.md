@@ -236,20 +236,6 @@ be deposited in the pool.
 
 ---
 
-Balance: displays the balance of T tokens deposited and the equivalent counter-value of fT.
-```
-./cli/flufcli.ts balance -u <url> -p <file> <token mint> <account>
-```
-The parameters are:
-- \<token mint\>: the base59 address of the token mint that to
-be deposited in the pool.
-- \<account\>: the account for which the balance is to be displayed.
-
-The option "-p" is not needed, as this operation is read-only.
-However, if \<account\> is missing, the account associated with
-this file is used.
-
----
 Run: this is the command that initiates the flash loan. It issues
 the loan to the borrower program's and calls it's handle_borrow entry point to perform the desired action.
 ```
@@ -273,7 +259,9 @@ Feesbalance: displays the fees collected for the given pool determined by the to
 ```
 The parameters are:
 - \<token mint\>: the base59 address of the token mint that determines the pool.
+
 ---
+
 Feeswithdraw: withdraws the fees collected for the given pool determined by the token mint deposited, into the given token
 account.
 ```

@@ -200,9 +200,6 @@ const run = async() => {
             }).signers([payer]).rpc();
             console.log("withdraw transaction signature", withdrawTx);
             break;
-        case 'balance':
-            console.log('balance');
-            break;
         case 'run':
             // Check if for missing arguments
             if (argv._.length < 6) {
@@ -227,7 +224,12 @@ const run = async() => {
             console.log("lendAndCall transaction signature", lendAndCallTx);
             break;
         case 'feesbalance':
-            console.log('feesbalance');
+            // Get the balance of token_mint in the fee_account
+            const ferAccountInfo = await getAccount(
+                provider.connection,
+                fee_account
+            )
+            console.log("fee_balance", ferAccountInfo.amount);
             break;
         case 'feeswithdraw':
             // Check if the collector account (third argument) is missing
