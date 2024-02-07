@@ -286,7 +286,21 @@ by the -p option.
 
 ## Implementation and Integration Instructions
 
-TBD
+To integrate the FLUF Protocol one has to modify the sample program ```borrower_sample``` and look for the following inside:
+```
+    // Put your business logic here
+    // - Use the borrowed amount to perform some business logic
+    // - Send the profit to the user_account
+
+```
+
+There, calls to other programs via CPI can be made.
+
+If the program needs to borrow T, to integrate with existing deployed liquidity, the received fT as part of the Flash Loan can be converted to T by calling the ```withdraw``` entry point of the ```fluf``` program via CPI. However, this conversion can be performed for amounts up to the available T in the corresponding FLUF Pool.
+
+Alternatively fT can be deployed in DeFi protocols. In such case, arbitrary large amount of fT can be borrowed from the FLUF Protocol and utilized further.
+
+It is also possible to deposit fT in the FLUF Protocol and mint ffT counter-value in exchange, then fffT, ffffT etc., as long as there are interested parties in flash-borrowing those assets - otherwise they will not appreciate in value.
 
 ## Known Issues
 
@@ -310,6 +324,15 @@ The program needs a security review. u64 overflows need attention. In places not
 calculations are performed in u128 precision and then scaled back to avoid overflows and
 rounding issues. Yet, a complete review and fuzzing is needed.
 
+Finally there is an issue with ```remaining_accounts``` in Anchor that needs to be solved, in order to pass all remaining accounts passed to the ```lendAndCal``` entry point of ```fluf``` further to the ```borrow_handler``` entry point of ```borrower_sample```. Maybe it will get resolved in the next version, or maybe there are instructions how to work this in the current version of Anchor: v0.29.0.
+
 ## Conclusion
 
-TBD
+There is no need for each protocol to implement their own Flash Loans. The FLUF Protocol can serve other composable protocols which are even unaware of Flash Loans.
+
+All involved parties benefit from the Flash Loans:
+- Investors make 0.2% on each Flash Loan, even when non-existent fT are lent.
+- Users make profit from engaging the flash-borrowed funds in DeFi opportunities in other protocols, such as Price Arbitrage, Liquidations etc.
+- The owners of the FLUF Protocol make 0.05% on each Flash Loan, even when non-existent fT are lent.
+
+In the future the ownership of the FLUF Protocol may be tokenized and set up as a DAO in order to raise funds for faster marketing and business development.
