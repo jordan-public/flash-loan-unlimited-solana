@@ -1,4 +1,4 @@
-This project won the following 🥉[3rd place](https://youtu.be/QuHHf63oLN4?t=3480) at the [Encode Club Solana 2024](https://www.encode.club/encodesolanahack) hackathon. The finalist presentation is [here](https://youtu.be/QuHHf63oLN4?t=765).
+This project won the 🥉[3rd place](https://youtu.be/QuHHf63oLN4?t=3480) at the [Encode Club Solana 2024](https://www.encode.club/encodesolanahack) hackathon. The finalist presentation is [here](https://youtu.be/QuHHf63oLN4?t=765).
 
 # FLUF Protocol - Flash Loan Unlimited Facility on Solana
 
